@@ -23,7 +23,7 @@ router.post('/login', zValidator('json', loginSchema), async (c) => {
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'Strict',
+    sameSite: 'None',
     maxAge: 60 * 60 * 24 * 7
   });
 
@@ -49,7 +49,7 @@ router.post('/setup', async (c) => {
     ).run();
   
     // 2. Hash the password using your local Cloudflare Worker environment
-    const hash = await hashPassword('password123');
+    const hash = await hashPassword('980121880');
   
     // 3. Insert or update Emad with the guaranteed correct hash
     await c.env.DB.prepare(`

@@ -11,13 +11,32 @@ import withdrawalRoutes from './routes/withdrawals';
 import dashboardRoutes from './routes/dashboard';
 import docsRoutes from './routes/docs';
 
+
 const app = new Hono<Env>().basePath('/api');
 
 // Global Middleware
-app.use('*', cors({
-  origin: (origin) => origin,
-  credentials: true,
-}));
+app.use(
+  '*',
+  cors({
+    origin: [
+      'http://localhost:4173',
+      'http://localhost:3000',
+      'https://jib-be-jib-web.pages.dev'
+    ],
+    credentials: true,
+    allowMethods: [
+      'GET',
+      'POST',
+      'PUT',
+      'DELETE',
+      'OPTIONS'
+    ],
+    allowHeaders: [
+      'Content-Type',
+      'Authorization'
+    ]
+  })
+);
 
 app.onError(errorHandler);
 

@@ -18,7 +18,8 @@
 		{
 			"binding": "DB",
 			"database_name": "jib-be-jib-db",
-			"database_id": "064ba47f-0006-493e-8f11-493bf3c7df6c"
+			"database_id": "064ba47f-0006-493e-8f11-493bf3c7df6c",
+			"migrations_dir": "src/db/migrations"
 		}
 	]
 }
