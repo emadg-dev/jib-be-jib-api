@@ -24,6 +24,7 @@ router.post('/login', zValidator('json', loginSchema), async (c) => {
     httpOnly: true,
     secure: true,
     sameSite: 'None',
+    path: '/',
     maxAge: 60 * 60 * 24 * 7
   });
 
