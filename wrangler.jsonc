@@ -13,6 +13,13 @@
 	"upload_source_maps": true,
 	"compatibility_flags": [
 		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "jib_be_jib_db",
+			"database_name": "jib-be-jib-db",
+			"database_id": "064ba47f-0006-493e-8f11-493bf3c7df6c"
+		}
 	]
 	/**
 	 * Smart Placement
