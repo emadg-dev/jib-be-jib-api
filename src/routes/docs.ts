@@ -9,7 +9,7 @@ const openApiSpec = {
   info: {
     title: 'Jib-be-Jib API',
     version: '1.0.0',
-    description: 'API for Jib-be-Jib collaborative trip expense manager.',
+    description: 'API for Jib-be-Jib collaborative trip expense manager. Login selects a trip automatically when exactly one active trip is available; otherwise, call /trip/select before using trip-scoped endpoints.'
   },
   servers: [
     {
@@ -88,6 +88,35 @@ const openApiSpec = {
         responses: { '200': { description: 'Returns current authenticated user details' } }
       }
     },
+    '/trip/available': {
+      get: {
+        tags: ['Trips'],
+        summary: 'List trips available to the authenticated member',
+        responses: { '200': { description: 'Trips with role and active state' } }
+      }
+    },
+    '/trip/select': {
+      post: {
+        tags: ['Trips'],
+        summary: 'Select an active trip for the current session',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', required: ['trip_id'], properties: { trip_id: { type: 'string' } } } } }
+        },
+        responses: { '200': { description: 'Selected trip and replacement token' }, '403': { description: 'Trip is not an active membership' } }
+      }
+    },
+    '/trip': {
+      post: {
+        tags: ['Trips'],
+        summary: 'Create a trip and add the current member as its owner',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, currency: { type: 'string', example: 'USD' } } } } }
+        },
+        responses: { '201': { description: 'Trip created' } }
+      }
+    },
     '/dashboard': {
       get: {
         tags: ['Dashboard'],
@@ -99,7 +128,7 @@ const openApiSpec = {
     '/members': {
       get: {
         tags: ['Members'],
-        summary: 'List all members',
+        summary: 'List members assigned to the selected trip (including inactive members)',
         responses: { '200': { description: 'Array of members' } }
       },
       post: {
@@ -112,15 +141,28 @@ const openApiSpec = {
               schema: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string' },
+                  name: { type: 'string', description: 'Unique login username' },
+                  display_name: { type: 'string' },
                   password: { type: 'string' },
-                  role: { type: 'string', enum: ['owner', 'member'] }
+                  role: { type: 'string', enum: ['owner', 'member'] },
+                  active: { type: 'boolean' }
                 }
               }
             }
           }
         },
         responses: { '201': { description: 'Member created' } }
+      }
+    },
+    '/members/add': {
+      post: {
+        tags: ['Members'],
+        summary: 'Add an existing account to the selected trip (Owner only)',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', required: ['member_id'], properties: { member_id: { type: 'string' }, role: { type: 'string', enum: ['owner', 'member'] }, active: { type: 'boolean' } } } } }
+        },
+        responses: { '201': { description: 'Membership created or updated' } }
       }
     },
     '/deposits': {

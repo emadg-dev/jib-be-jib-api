@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS WithdrawalMembers;
 DROP TABLE IF EXISTS Withdrawals;
 DROP TABLE IF EXISTS Deposits;
+DROP TABLE IF EXISTS MemberTrips;
 DROP TABLE IF EXISTS Members;
 DROP TABLE IF EXISTS Trips;
 
@@ -13,11 +14,25 @@ CREATE TABLE Trips (
 
 CREATE TABLE Members (
     id TEXT PRIMARY KEY,
+    -- Legacy fields are retained for compatibility with existing databases.
+    -- MemberTrips is the authoritative trip relationship and role.
     trip_id TEXT NOT NULL,
     name TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'member', -- 'owner' or 'member'
+    role TEXT NOT NULL DEFAULT 'member',
+    display_name TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE
+);
+
+CREATE TABLE MemberTrips (
+    member_id TEXT NOT NULL,
+    trip_id TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member' CHECK(role IN ('owner', 'member')),
+    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0, 1)),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (member_id, trip_id),
+    FOREIGN KEY (member_id) REFERENCES Members(id) ON DELETE CASCADE,
     FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE
 );
 
@@ -51,6 +66,6 @@ CREATE TABLE WithdrawalMembers (
     FOREIGN KEY (member_id) REFERENCES Members(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_members_trip ON Members(trip_id);
+CREATE INDEX idx_member_trips_trip ON MemberTrips(trip_id);
 CREATE INDEX idx_deposits_trip ON Deposits(trip_id);
 CREATE INDEX idx_withdrawals_trip ON Withdrawals(trip_id);

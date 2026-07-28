@@ -7,8 +7,9 @@
     "deploy": "wrangler deploy",
     "db:init": "wrangler d1 execute jib-be-jib-db --local --file=./src/db/schema.sql",
     "db:seed": "wrangler d1 execute jib-be-jib-db --local --file=./src/db/seed.sql",
-    "db:init:prod": "wrangler d1 execute jib-be-jib-db --file=./src/db/schema.sql",
-    "db:seed:prod": "wrangler d1 execute jib-be-jib-db --file=./src/db/seed.sql"
+    "db:migrate:prod": "wrangler d1 migrations apply jib-be-jib-db --remote",
+    "db:init:prod": "wrangler d1 migrations apply jib-be-jib-db --remote",
+    "db:seed:prod": "wrangler d1 execute jib-be-jib-db --remote --file=./src/db/seed.sql"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.2.1",

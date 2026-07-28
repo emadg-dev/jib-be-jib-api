@@ -18,12 +18,20 @@ const app = new Hono<Env>().basePath('/api');
 app.use(
   '*',
   cors({
-    origin: [
-      'http://localhost:4173',
-      'http://localhost:3000',
-      'https://jib-be-jib-web.pages.dev'
-    ],
+    origin: (origin) => {
+      const allowed = [
+        'http://localhost:4173',
+        'http://localhost:3000',
+        'https://jib-be-jib-web.pages.dev'
+      ];
+
+      return allowed.includes(origin) ? origin : '';
+    },
     credentials: true,
+    allowHeaders: [
+      'Content-Type',
+      'Authorization'
+    ],
     allowMethods: [
       'GET',
       'POST',
@@ -31,10 +39,6 @@ app.use(
       'DELETE',
       'OPTIONS'
     ],
-    allowHeaders: [
-      'Content-Type',
-      'Authorization'
-    ]
   })
 );
 

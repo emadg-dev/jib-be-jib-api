@@ -3,13 +3,12 @@ import { Env } from '../types/env';
 import { DashboardRepository } from '../repositories/DashboardRepository';
 import { DashboardService } from '../services/TripService';
 import { successResponse } from '../utils/response';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
 
 const router = new Hono<Env>();
-router.use('*', authMiddleware);
-
+router.use('*', authMiddleware, requireActiveTrip);
 router.get('/', async (c) => {
-  const service = new DashboardService(new DashboardRepository(c.env.DB));
-  return c.json(successResponse(await service.getDashboardData()));
+  const result = await new DashboardService(new DashboardRepository(c.env.DB)).getDashboardData(c.get('user').trip_id!);
+  return c.json(successResponse(result));
 });
 export default router;

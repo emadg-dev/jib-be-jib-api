@@ -1,27 +1,60 @@
 import { sign } from 'hono/jwt';
 import { MemberRepository } from '../repositories/MemberRepository';
+import { TripRepository } from '../repositories/TripRepository';
 import { verifyPassword } from '../utils/password';
 import { HTTPException } from 'hono/http-exception';
 
 export class AuthService {
-  constructor(private memberRepo: MemberRepository, private jwtSecret: string) {}
+  constructor(
+    private memberRepo: MemberRepository,
+    private tripRepo: TripRepository,
+    private jwtSecret: string
+  ) {}
 
   async login(name: string, passwordAttempt: string) {
-    const user = await this.memberRepo.findByName(name);
-    if (!user) throw new HTTPException(401, { message: 'Invalid credentials' });
+    const member = await this.memberRepo.findByName(name);
+    if (!member || !await verifyPassword(passwordAttempt, member.password_hash as string)) {
+      throw new HTTPException(401, { message: 'Invalid credentials' });
+    }
 
-    const isValid = await verifyPassword(passwordAttempt, user.password_hash as string);
-    if (!isValid) throw new HTTPException(401, { message: 'Invalid credentials' });
+    const trips = await this.tripRepo.findActiveForMember(member.id as string);
+    if (!trips.length) throw new HTTPException(403, { message: 'No active trips are available for this account' });
 
-    const payload = {
-      id: user.id,
-      name: user.name,
-      role: user.role,
-      trip_id: user.trip_id,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 // 7 days
+    const selectedTrip = trips.length === 1 ? trips[0] as { id: string; role: 'owner' | 'member' } : undefined;
+    const token = await this.sign(member, selectedTrip);
+    return {
+      user: this.user(member, selectedTrip),
+      trips,
+      requires_trip_selection: !selectedTrip,
+      token
     };
+  }
 
-    const token = await sign(payload, this.jwtSecret, 'HS256');
-    return { user: { id: user.id, name: user.name, role: user.role }, token };
+  async selectTrip(memberId: string, tripId: string) {
+    const member = await this.memberRepo.findById(memberId);
+    const membership = await this.tripRepo.findMembership(memberId, tripId) as { role: 'owner' | 'member'; active: number } | null;
+    if (!member || !membership || !membership.active) {
+      throw new HTTPException(403, { message: 'You do not have an active membership in this trip' });
+    }
+
+    const token = await this.sign(member, { id: tripId, role: membership.role });
+    return { user: this.user(member, { id: tripId, role: membership.role }), token };
+  }
+
+  private user(member: Record<string, unknown>, trip?: { id: string; role: 'owner' | 'member' }) {
+    return {
+      id: member.id as string,
+      name: member.name as string,
+      display_name: (member.display_name || member.name) as string,
+      role: trip?.role,
+      trip_id: trip?.id
+    };
+  }
+
+  private async sign(member: Record<string, unknown>, trip?: { id: string; role: 'owner' | 'member' }) {
+    return sign({
+      ...this.user(member, trip),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
+    }, this.jwtSecret, 'HS256');
   }
 }

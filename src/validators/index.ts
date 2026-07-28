@@ -10,10 +10,22 @@ export const tripSchema = z.object({
   currency: z.string().length(3, 'Currency must be 3 letters').default('USD')
 });
 
+export const selectTripSchema = z.object({
+  trip_id: z.string().min(1, 'Trip is required')
+});
+
 export const memberSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, 'Username is required'),
+  display_name: z.string().min(1, 'Display name is required'),
   password: z.string().min(6, 'Password must be at least 6 characters').optional(),
-  role: z.enum(['owner', 'member']).default('member')
+  role: z.enum(['owner', 'member']).default('member'),
+  active: z.boolean().default(true)
+});
+
+export const addMemberToTripSchema = z.object({
+  member_id: z.string().min(1, 'Member is required'),
+  role: z.enum(['owner', 'member']).default('member'),
+  active: z.boolean().default(true)
 });
 
 export const depositSchema = z.object({
@@ -33,4 +45,4 @@ export const withdrawalSchema = z.object({
 }).refine((data) => {
   const totalShares = data.beneficiaries.reduce((sum, b) => sum + b.share, 0);
   return Math.abs(totalShares - data.amount) < 0.01;
-}, { message: "Sum of shares must equal total amount", path: ["beneficiaries"] });
+}, { message: 'Sum of shares must equal total amount', path: ['beneficiaries'] });

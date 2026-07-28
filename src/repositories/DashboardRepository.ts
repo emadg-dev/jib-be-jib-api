@@ -1,42 +1,53 @@
 export class DashboardRepository {
-    constructor(private db: D1Database) {}
-  
-    async getMemberStats() {
-      const sql = `
-        SELECT 
-          m.id as member_id, 
-          m.name,
-          COALESCE(d.total_deposited, 0) as total_deposited,
-          COALESCE(w.total_expenses, 0) as total_expenses,
-          COALESCE(d.total_deposited, 0) - COALESCE(w.total_expenses, 0) as balance
-        FROM Members m
-        LEFT JOIN (
-          SELECT member_id, SUM(amount) as total_deposited 
-          FROM Deposits GROUP BY member_id
-        ) d ON m.id = d.member_id
-        LEFT JOIN (
-          SELECT member_id, SUM(share) as total_expenses 
-          FROM WithdrawalMembers GROUP BY member_id
-        ) w ON m.id = w.member_id
-      `;
-      return (await this.db.prepare(sql).all()).results;
-    }
-  
-    async getTotals() {
-      const deposits = await this.db.prepare('SELECT SUM(amount) as total FROM Deposits').first();
-      const withdrawals = await this.db.prepare('SELECT SUM(amount) as total FROM Withdrawals').first();
-      return {
-        totalDeposits: (deposits?.total as number) || 0,
-        totalWithdrawals: (withdrawals?.total as number) || 0
-      };
-    }
-  
-    async getExpensesByCategory() {
-      return (await this.db.prepare(`
-        SELECT category, SUM(amount) as total 
-        FROM Withdrawals 
-        GROUP BY category 
-        ORDER BY total DESC
-      `).all()).results;
-    }
+  constructor(private db: D1Database) {}
+
+  async getMemberStats(tripId: string) {
+    const sql = `
+      SELECT
+        m.id AS member_id,
+        m.name,
+        m.display_name,
+        mt.active,
+        COALESCE(d.total_deposited, 0) AS total_deposited,
+        COALESCE(w.total_expenses, 0) AS total_expenses,
+        COALESCE(d.total_deposited, 0) - COALESCE(w.total_expenses, 0) AS balance
+      FROM MemberTrips mt
+      JOIN Members m ON m.id = mt.member_id
+      LEFT JOIN (
+        SELECT member_id, SUM(amount) AS total_deposited
+        FROM Deposits
+        WHERE trip_id = ?
+        GROUP BY member_id
+      ) d ON m.id = d.member_id
+      LEFT JOIN (
+        SELECT wm.member_id, SUM(wm.share) AS total_expenses
+        FROM WithdrawalMembers wm
+        JOIN Withdrawals w ON w.id = wm.withdrawal_id
+        WHERE w.trip_id = ?
+        GROUP BY wm.member_id
+      ) w ON m.id = w.member_id
+      WHERE mt.trip_id = ?
+      ORDER BY m.display_name COLLATE NOCASE ASC
+    `;
+    return (await this.db.prepare(sql).bind(tripId, tripId, tripId).all()).results;
   }
+
+  async getTotals(tripId: string) {
+    const deposits = await this.db.prepare('SELECT SUM(amount) AS total FROM Deposits WHERE trip_id = ?').bind(tripId).first();
+    const withdrawals = await this.db.prepare('SELECT SUM(amount) AS total FROM Withdrawals WHERE trip_id = ?').bind(tripId).first();
+    return {
+      totalDeposits: (deposits?.total as number) || 0,
+      totalWithdrawals: (withdrawals?.total as number) || 0
+    };
+  }
+
+  async getExpensesByCategory(tripId: string) {
+    return (await this.db.prepare(`
+      SELECT category, SUM(amount) AS total
+      FROM Withdrawals
+      WHERE trip_id = ?
+      GROUP BY category
+      ORDER BY total DESC
+    `).bind(tripId).all()).results;
+  }
+}

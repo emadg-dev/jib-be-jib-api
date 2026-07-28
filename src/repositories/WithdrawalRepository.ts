@@ -1,52 +1,67 @@
 export class WithdrawalRepository {
-    constructor(private db: D1Database) {}
-  
-    async findAll() {
-      const withdrawals = (await this.db.prepare('SELECT * FROM Withdrawals ORDER BY created_at DESC').all()).results;
-      const wm = (await this.db.prepare(`
-        SELECT wm.*, m.name as member_name 
-        FROM WithdrawalMembers wm 
-        JOIN Members m ON wm.member_id = m.id
-      `).all()).results;
-  
-      return withdrawals.map((w: any) => ({
-        ...w,
-        beneficiaries: wm.filter((b: any) => b.withdrawal_id === w.id)
-      }));
-    }
-  
-    async create(id: string, trip_id: string, description: string, category: string, amount: number, beneficiaries: any[]) {
-      const stmts = [
-        this.db.prepare('INSERT INTO Withdrawals (id, trip_id, description, category, amount) VALUES (?, ?, ?, ?, ?)')
-          .bind(id, trip_id, description, category, amount)
-      ];
-  
-      for (const b of beneficiaries) {
-        stmts.push(
-          this.db.prepare('INSERT INTO WithdrawalMembers (withdrawal_id, member_id, share) VALUES (?, ?, ?)')
-            .bind(id, b.member_id, b.share)
-        );
-      }
-      return await this.db.batch(stmts);
-    }
-  
-    async update(id: string, description: string, category: string, amount: number, beneficiaries: any[]) {
-      const stmts = [
-        this.db.prepare('UPDATE Withdrawals SET description = ?, category = ?, amount = ? WHERE id = ?')
-          .bind(description, category, amount, id),
-        this.db.prepare('DELETE FROM WithdrawalMembers WHERE withdrawal_id = ?').bind(id)
-      ];
-  
-      for (const b of beneficiaries) {
-        stmts.push(
-          this.db.prepare('INSERT INTO WithdrawalMembers (withdrawal_id, member_id, share) VALUES (?, ?, ?)')
-            .bind(id, b.member_id, b.share)
-        );
-      }
-      return await this.db.batch(stmts);
-    }
-  
-    async delete(id: string) {
-      return await this.db.prepare('DELETE FROM Withdrawals WHERE id = ?').bind(id).run();
-    }
+  constructor(private db: D1Database) {}
+
+  async findAll(tripId: string) {
+    const withdrawals = (await this.db.prepare(
+      'SELECT * FROM Withdrawals WHERE trip_id = ? ORDER BY created_at DESC'
+    ).bind(tripId).all()).results;
+    const beneficiaries = (await this.db.prepare(`
+      SELECT wm.*, m.display_name AS member_name
+      FROM WithdrawalMembers wm
+      JOIN Withdrawals w ON w.id = wm.withdrawal_id
+      JOIN Members m ON wm.member_id = m.id
+      WHERE w.trip_id = ?
+    `).bind(tripId).all()).results;
+
+    return withdrawals.map((withdrawal: any) => ({
+      ...withdrawal,
+      beneficiaries: beneficiaries.filter((beneficiary: any) => beneficiary.withdrawal_id === withdrawal.id)
+    }));
   }
+
+  async create(id: string, tripId: string, description: string, category: string, amount: number, beneficiaries: any[]) {
+    const allActive = await this.areMembersActive(tripId, beneficiaries);
+    if (!allActive) return false;
+
+    const statements = [
+      this.db.prepare('INSERT INTO Withdrawals (id, trip_id, description, category, amount) VALUES (?, ?, ?, ?, ?)')
+        .bind(id, tripId, description, category, amount),
+      ...beneficiaries.map((beneficiary) => this.db.prepare(
+        'INSERT INTO WithdrawalMembers (withdrawal_id, member_id, share) VALUES (?, ?, ?)'
+      ).bind(id, beneficiary.member_id, beneficiary.share))
+    ];
+    await this.db.batch(statements);
+    return true;
+  }
+
+  async update(id: string, tripId: string, description: string, category: string, amount: number, beneficiaries: any[]) {
+    const allActive = await this.areMembersActive(tripId, beneficiaries);
+    if (!allActive) return false;
+
+    const statements = [
+      this.db.prepare('UPDATE Withdrawals SET description = ?, category = ?, amount = ? WHERE id = ? AND trip_id = ?')
+        .bind(description, category, amount, id, tripId),
+      this.db.prepare('DELETE FROM WithdrawalMembers WHERE withdrawal_id = ? AND EXISTS (SELECT 1 FROM Withdrawals WHERE id = ? AND trip_id = ?)')
+        .bind(id, id, tripId),
+      ...beneficiaries.map((beneficiary) => this.db.prepare(
+        'INSERT INTO WithdrawalMembers (withdrawal_id, member_id, share) VALUES (?, ?, ?)'
+      ).bind(id, beneficiary.member_id, beneficiary.share))
+    ];
+    await this.db.batch(statements);
+    return true;
+  }
+
+  async delete(id: string, tripId: string) {
+    return this.db.prepare('DELETE FROM Withdrawals WHERE id = ? AND trip_id = ?').bind(id, tripId).run();
+  }
+
+  private async areMembersActive(tripId: string, beneficiaries: any[]) {
+    const memberIds = [...new Set(beneficiaries.map((beneficiary) => beneficiary.member_id))];
+    const placeholders = memberIds.map(() => '?').join(', ');
+    const result = await this.db.prepare(`
+      SELECT COUNT(*) AS count FROM MemberTrips
+      WHERE trip_id = ? AND active = 1 AND member_id IN (${placeholders})
+    `).bind(tripId, ...memberIds).first<{ count: number }>();
+    return result?.count === memberIds.length;
+  }
+}
