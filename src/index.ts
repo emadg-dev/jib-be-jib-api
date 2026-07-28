@@ -11,8 +11,19 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response("Hello World!");
-	},
-} satisfies ExportedHandler<Env>;
+import { Hono } from "hono";
+import type { Env } from "./types";
+import members from "./routes/members";
+
+
+const app = new Hono<{ Bindings: Env }>();
+
+app.get("/", (c) => {
+	return c.json({
+		message: "Jib Be Jib API"
+    });
+});
+
+app.route("/members", members);
+
+export default app;
