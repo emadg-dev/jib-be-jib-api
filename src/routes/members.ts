@@ -1,30 +1,28 @@
-import { Hono } from "hono";
-import { db } from "../db";
-import type { Env } from "../types";
+import { Hono } from 'hono';
+import { Env } from '../types/env';
+import { zValidator } from '@hono/zod-validator';
+import { memberSchema } from '../validators';
+import { MemberRepository } from '../repositories/MemberRepository';
+import { MemberService } from '../services/TripService';
+import { successResponse } from '../utils/response';
+import { authMiddleware, requireOwner } from '../middleware/auth';
 
-const members = new Hono<{ Bindings: Env }>();
+const router = new Hono<Env>();
+router.use('*', authMiddleware);
 
-members.get("/", async (c) => {
+const getService = (c: any) => new MemberService(new MemberRepository(c.env.DB));
 
-    const result = await db(c)
-        .prepare("SELECT * FROM members")
-        .all();
-
-    return c.json(result.results);
+router.get('/', async (c) => c.json(successResponse(await getService(c).getMembers())));
+router.get('/:id', async (c) => c.json(successResponse(await getService(c).getMember(c.req.param('id')))));
+router.post('/', requireOwner, zValidator('json', memberSchema), async (c) => {
+  const user = c.get('user');
+  return c.json(successResponse(await getService(c).createMember(user.trip_id, c.req.valid('json'))), 201);
 });
-
-members.post("/", async (c) => {
-
-    const body = await c.req.json();
-
-    await db(c)
-        .prepare("INSERT INTO members(name) VALUES(?)")
-        .bind(body.name)
-        .run();
-
-    return c.json({
-        success: true
-    });
+router.put('/:id', requireOwner, zValidator('json', memberSchema), async (c) => {
+  return c.json(successResponse(await getService(c).updateMember(c.req.param('id'), c.req.valid('json'))));
 });
-
-export default members;
+router.delete('/:id', requireOwner, async (c) => {
+  await getService(c).deleteMember(String(c.req.param('id')));
+  return c.json(successResponse(null, 'Deleted'));
+});
+export default router;
