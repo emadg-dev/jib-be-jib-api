@@ -28,6 +28,11 @@ export const addMemberToTripSchema = z.object({
   active: z.boolean().default(true)
 });
 
+export const changePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required'),
+  new_password: z.string().min(6, 'New password must be at least 6 characters')
+});
+
 export const depositSchema = z.object({
   member_id: z.string().min(1, 'Member is required'),
   amount: z.number().positive('Amount must be positive'),

@@ -36,8 +36,8 @@ router.put('/', requireActiveTrip, requireOwner, zValidator('json', tripSchema),
   return c.json(successResponse(await tripService(c).updateTrip(c.get('user').trip_id!, data.name, data.currency)));
 });
 
-router.delete('/', requireActiveTrip, requireOwner, async (c) => {
-  await tripService(c).deleteTrip(c.get('user').trip_id!);
+router.delete('/delete/:id', requireOwner, async (c) => {
+  await tripService(c).deleteTrip(c.req.param('id')!);
   return c.json(successResponse(null, 'Trip deleted'));
 });
 

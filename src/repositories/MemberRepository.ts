@@ -9,6 +9,10 @@ export class MemberRepository {
     return this.db.prepare('SELECT id, name, display_name, created_at FROM Members WHERE id = ?').bind(id).first();
   }
 
+  async findFullById(id: string) {
+    return this.db.prepare('SELECT id, name, display_name, password_hash, created_at FROM Members WHERE id = ?').bind(id).first();
+  }
+
   async findAll(tripId: string) {
     return (await this.db.prepare(`
       SELECT m.id, m.name, m.display_name, mt.role, mt.active, mt.created_at
@@ -54,6 +58,10 @@ export class MemberRepository {
         : this.db.prepare('UPDATE Members SET display_name = ? WHERE id = ?').bind(displayName, memberId)
     ];
     return this.db.batch(statements);
+  }
+
+  async updatePassword(id: string, hash: string) {
+    return this.db.prepare('UPDATE Members SET password_hash = ? WHERE id = ?').bind(hash, id).run();
   }
 
   async removeFromTrip(memberId: string, tripId: string) {

@@ -117,12 +117,57 @@ const openApiSpec = {
         responses: { '201': { description: 'Trip created' } }
       }
     },
+    '/trip/delete/{id}': {
+      delete: {
+        tags: ['Trips'],
+        summary: 'Delete a trip (Owner only)',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Trip ID'
+          }
+        ],
+        responses: { '200': { description: 'Trip deleted' } }
+      }
+    },
     '/dashboard': {
       get: {
         tags: ['Dashboard'],
         summary: 'Get dashboard statistics',
         description: 'Returns bank balance, totals, member stats, and settlements',
         responses: { '200': { description: 'Dashboard data' } }
+      }
+    },
+    '/profile': {
+      get: {
+        tags: ['Profile'],
+        summary: 'Get current user profile',
+        responses: { '200': { description: 'User profile details' } }
+      }
+    },
+    '/profile/password': {
+      put: {
+        tags: ['Profile'],
+        summary: 'Change current user password',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['current_password', 'new_password'],
+                properties: {
+                  current_password: { type: 'string' },
+                  new_password: { type: 'string', minLength: 6 }
+                }
+              }
+            }
+          }
+        },
+        responses: { '200': { description: 'Password updated' }, '400': { description: 'Current password is incorrect' } }
       }
     },
     '/members': {

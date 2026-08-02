@@ -9,6 +9,7 @@ import memberRoutes from './routes/members';
 import depositRoutes from './routes/deposits';
 import withdrawalRoutes from './routes/withdrawals';
 import dashboardRoutes from './routes/dashboard';
+import profileRoutes from './routes/profile';
 import docsRoutes from './routes/docs';
 
 
@@ -52,6 +53,7 @@ app.route('/members', memberRoutes);
 app.route('/deposits', depositRoutes);
 app.route('/withdrawals', withdrawalRoutes);
 app.route('/dashboard', dashboardRoutes);
+app.route('/profile', profileRoutes);
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
