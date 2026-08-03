@@ -42,6 +42,7 @@ CREATE TABLE Deposits (
     member_id TEXT NOT NULL,
     amount REAL NOT NULL CHECK(amount > 0),
     note TEXT,
+    date TEXT DEFAULT (DATE('now')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES Members(id) ON DELETE CASCADE
@@ -53,6 +54,7 @@ CREATE TABLE Withdrawals (
     description TEXT NOT NULL,
     category TEXT NOT NULL,
     amount REAL NOT NULL CHECK(amount > 0),
+    date TEXT DEFAULT (DATE('now')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE
 );

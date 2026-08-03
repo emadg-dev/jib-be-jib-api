@@ -36,7 +36,8 @@ export const changePasswordSchema = z.object({
 export const depositSchema = z.object({
   member_id: z.string().min(1, 'Member is required'),
   amount: z.number().positive('Amount must be positive'),
-  note: z.string().optional()
+  note: z.string().optional(),
+  date: z.string().optional()
 });
 
 export const withdrawalSchema = z.object({
@@ -46,7 +47,8 @@ export const withdrawalSchema = z.object({
   beneficiaries: z.array(z.object({
     member_id: z.string(),
     share: z.number().nonnegative()
-  })).min(1, 'At least one beneficiary is required')
+  })).min(1, 'At least one beneficiary is required'),
+  date: z.string().optional()
 }).refine((data) => {
   const totalShares = data.beneficiaries.reduce((sum, b) => sum + b.share, 0);
   return Math.abs(totalShares - data.amount) < 0.01;

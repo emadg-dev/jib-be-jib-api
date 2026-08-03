@@ -228,7 +228,8 @@ const openApiSpec = {
                 properties: {
                   member_id: { type: 'string' },
                   amount: { type: 'number' },
-                  note: { type: 'string' }
+                  note: { type: 'string' },
+                  date: { type: 'string', description: "ISO date (YYYY-MM-DD). Defaults to today if omitted" }
                 }
               }
             }
@@ -265,7 +266,8 @@ const openApiSpec = {
                         share: { type: 'number' }
                       }
                     }
-                  }
+                  },
+                  date: { type: 'string', description: "ISO date (YYYY-MM-DD). Defaults to today if omitted" }
                 }
               }
             }

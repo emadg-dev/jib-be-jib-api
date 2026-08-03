@@ -59,11 +59,11 @@ export class DepositService {
   async getDeposits(tripId: string) { return this.repo.findAll(tripId); }
   async createDeposit(tripId: string, data: any) {
     const id = `dep_${crypto.randomUUID()}`;
-    const result = await this.repo.create(id, tripId, data.member_id, data.amount, data.note);
+    const result = await this.repo.create(id, tripId, data.member_id, data.amount, data.note, data.date);
     if (!result.meta.changes) throw new HTTPException(400, { message: 'Member must be active in this trip' });
     return { id, ...data };
   }
-  async updateDeposit(id: string, tripId: string, data: any) { await this.repo.update(id, tripId, data.amount, data.note); return { id, ...data }; }
+  async updateDeposit(id: string, tripId: string, data: any) { await this.repo.update(id, tripId, data.amount, data.note, data.date); return { id, ...data }; }
   async deleteDeposit(id: string, tripId: string) { await this.repo.delete(id, tripId); }
 }
 
@@ -72,13 +72,13 @@ export class WithdrawalService {
   async getWithdrawals(tripId: string) { return this.repo.findAll(tripId); }
   async createWithdrawal(tripId: string, data: any) {
     const id = `wit_${crypto.randomUUID()}`;
-    if (!await this.repo.create(id, tripId, data.description, data.category, data.amount, data.beneficiaries)) {
+    if (!await this.repo.create(id, tripId, data.description, data.category, data.amount, data.beneficiaries, data.date)) {
       throw new HTTPException(400, { message: 'All beneficiaries must be active members of this trip' });
     }
     return { id, ...data };
   }
   async updateWithdrawal(id: string, tripId: string, data: any) {
-    if (!await this.repo.update(id, tripId, data.description, data.category, data.amount, data.beneficiaries)) {
+    if (!await this.repo.update(id, tripId, data.description, data.category, data.amount, data.beneficiaries, data.date)) {
       throw new HTTPException(400, { message: 'All beneficiaries must be active members of this trip' });
     }
     return { id, ...data };

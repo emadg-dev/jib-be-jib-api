@@ -12,9 +12,9 @@ INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES
 ('mem_1', 'trip_1', 'owner', 1), ('mem_2', 'trip_1', 'member', 1),
 ('mem_3', 'trip_1', 'member', 1), ('mem_4', 'trip_1', 'member', 1);
 
-INSERT INTO Deposits (id, trip_id, member_id, amount, note) VALUES
-('dep_1', 'trip_1', 'mem_1', 1000.0, 'Initial pool'),
-('dep_2', 'trip_1', 'mem_2', 500.0, 'Flight fund');
+INSERT INTO Deposits (id, trip_id, member_id, amount, note, date) VALUES
+('dep_1', 'trip_1', 'mem_1', 1000.0, 'Initial pool', DATE('now')),
+('dep_2', 'trip_1', 'mem_2', 500.0, 'Flight fund', DATE('now'));
 
 INSERT INTO Withdrawals (id, trip_id, description, category, amount) VALUES
 ('wit_1', 'trip_1', 'Airbnb Booking', 'Accommodation', 800.0),

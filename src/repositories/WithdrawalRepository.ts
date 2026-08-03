@@ -3,7 +3,7 @@ export class WithdrawalRepository {
 
   async findAll(tripId: string) {
     const withdrawals = (await this.db.prepare(
-      'SELECT * FROM Withdrawals WHERE trip_id = ? ORDER BY created_at DESC'
+      'SELECT * FROM Withdrawals WHERE trip_id = ? ORDER BY date DESC, created_at DESC'
     ).bind(tripId).all()).results;
     const beneficiaries = (await this.db.prepare(`
       SELECT wm.*, m.display_name AS member_name
@@ -19,13 +19,13 @@ export class WithdrawalRepository {
     }));
   }
 
-  async create(id: string, tripId: string, description: string, category: string, amount: number, beneficiaries: any[]) {
+  async create(id: string, tripId: string, description: string, category: string, amount: number, beneficiaries: any[], date?: string) {
     const allActive = await this.areMembersActive(tripId, beneficiaries);
     if (!allActive) return false;
 
     const statements = [
-      this.db.prepare('INSERT INTO Withdrawals (id, trip_id, description, category, amount) VALUES (?, ?, ?, ?, ?)')
-        .bind(id, tripId, description, category, amount),
+      this.db.prepare('INSERT INTO Withdrawals (id, trip_id, description, category, amount, date) VALUES (?, ?, ?, ?, ?, COALESCE(?, DATE(\'now\')) )')
+        .bind(id, tripId, description, category, amount, date || null),
       ...beneficiaries.map((beneficiary) => this.db.prepare(
         'INSERT INTO WithdrawalMembers (withdrawal_id, member_id, share) VALUES (?, ?, ?)'
       ).bind(id, beneficiary.member_id, beneficiary.share))
@@ -34,13 +34,13 @@ export class WithdrawalRepository {
     return true;
   }
 
-  async update(id: string, tripId: string, description: string, category: string, amount: number, beneficiaries: any[]) {
+  async update(id: string, tripId: string, description: string, category: string, amount: number, beneficiaries: any[], date?: string) {
     const allActive = await this.areMembersActive(tripId, beneficiaries);
     if (!allActive) return false;
 
     const statements = [
-      this.db.prepare('UPDATE Withdrawals SET description = ?, category = ?, amount = ? WHERE id = ? AND trip_id = ?')
-        .bind(description, category, amount, id, tripId),
+      this.db.prepare('UPDATE Withdrawals SET description = ?, category = ?, amount = ?, date = COALESCE(?, date) WHERE id = ? AND trip_id = ?')
+        .bind(description, category, amount, date || null, id, tripId),
       this.db.prepare('DELETE FROM WithdrawalMembers WHERE withdrawal_id = ? AND EXISTS (SELECT 1 FROM Withdrawals WHERE id = ? AND trip_id = ?)')
         .bind(id, id, tripId),
       ...beneficiaries.map((beneficiary) => this.db.prepare(
