@@ -2,7 +2,7 @@ export class MemberRepository {
   constructor(private db: D1Database) {}
 
   async findByName(name: string) {
-    return this.db.prepare('SELECT * FROM Members WHERE name = ?').bind(name).first();
+    return this.db.prepare('SELECT * FROM Members WHERE LOWER(name) = LOWER(?)').bind(name).first();
   }
 
   async findById(id: string) {
