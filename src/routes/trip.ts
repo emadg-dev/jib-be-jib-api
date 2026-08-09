@@ -23,7 +23,7 @@ router.post('/select', zValidator('json', selectTripSchema), async (c) => {
   return c.json(successResponse(result, 'Trip selected'));
 });
 
-router.post('/', requireActiveTrip, requireOwner, zValidator('json', tripSchema), async (c) => {
+router.post('/', zValidator('json', tripSchema), async (c) => {
   return c.json(successResponse(await tripService(c).createTrip(c.get('user').id, c.req.valid('json'))), 201);
 });
 
