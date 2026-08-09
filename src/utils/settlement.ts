@@ -1,4 +1,4 @@
-export interface Balance { member_id: string; name: string; balance: number; }
+export interface Balance { member_id: string; name: string; display_name?: string; balance: number; }
 export interface Settlement { from: string; fromName: string; to: string; toName: string; amount: number; }
 
 export function calculateSettlements(balances: Balance[]): Settlement[] {
@@ -10,14 +10,14 @@ export function calculateSettlements(balances: Balance[]): Settlement[] {
   while (d < debtors.length && c < creditors.length) {
     const debtor = debtors[d];
     const creditor = creditors[c];
-    
+
     const amount = Math.min(Math.abs(debtor.balance), creditor.balance);
     if (amount > 0.005) {
       settlements.push({
         from: debtor.member_id,
-        fromName: debtor.name,
+        fromName: debtor.display_name || debtor.name,
         to: creditor.member_id,
-        toName: creditor.name,
+        toName: creditor.display_name || creditor.name,
         amount: Number(amount.toFixed(2))
       });
     }
