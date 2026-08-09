@@ -107,6 +107,11 @@ const openApiSpec = {
       }
     },
     '/trip': {
+      get: {
+        tags: ['Trips'],
+        summary: 'Get the current active trip',
+        responses: { '200': { description: 'Current trip details' } }
+      },
       post: {
         tags: ['Trips'],
         summary: 'Create a trip and add the current member as its owner',
@@ -115,6 +120,26 @@ const openApiSpec = {
           content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, currency: { type: 'string', example: 'USD' } } } } }
         },
         responses: { '201': { description: 'Trip created' } }
+      }
+    },
+    '/trip/{id}': {
+      put: {
+        tags: ['Trips'],
+        summary: 'Update a trip by ID (Owner of that trip only)',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Trip ID'
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, currency: { type: 'string', example: 'EUR' } } } } }
+        },
+        responses: { '200': { description: 'Trip updated' }, '403': { description: 'Requires owner role in this trip' } }
       }
     },
     '/trip/delete/{id}': {
