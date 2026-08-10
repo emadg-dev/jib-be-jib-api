@@ -33,7 +33,7 @@ export const changePasswordSchema = z.object({
   new_password: z.string().min(6, 'New password must be at least 6 characters')
 });
 
-export const preferencesSchema = z.record(z.string(), z.boolean());
+export const preferencesSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
 
 export const avatarSchema = z.object({
   avatar: z.union([
