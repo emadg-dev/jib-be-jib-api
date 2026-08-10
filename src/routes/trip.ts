@@ -34,11 +34,14 @@ router.get('/', requireActiveTrip, async (c) => {
 router.put('/:id', requireOwner, zValidator('json', tripSchema), async (c) => {
   const data = c.req.valid('json');
   const tripId = c.req.param('id');
-  const membership = await c.env.DB.prepare(
-    'SELECT role FROM MemberTrips WHERE member_id = ? AND trip_id = ? AND active = 1'
-  ).bind(c.get('user').id, tripId).first<{ role: string }>();
-  if (!membership || membership.role !== 'owner') {
-    return c.json({ success: false, error: 'Forbidden: Requires owner role in this trip' }, 403);
+  const user = c.get('user');
+  if (user.role !== 'admin') {
+    const membership = await c.env.DB.prepare(
+      'SELECT role FROM MemberTrips WHERE member_id = ? AND trip_id = ? AND active = 1'
+    ).bind(user.id, tripId).first<{ role: string }>();
+    if (!membership || membership.role !== 'owner') {
+      return c.json({ success: false, error: 'Forbidden: Requires owner role in this trip' }, 403);
+    }
   }
   return c.json(successResponse(await tripService(c).updateTrip(tripId, data.name, data.currency)));
 });

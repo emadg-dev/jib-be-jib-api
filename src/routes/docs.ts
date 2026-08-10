@@ -64,16 +64,16 @@ const openApiSpec = {
         }
       }
     },
-    // '/auth/setup': {
-    //   post: {
-    //     tags: ['Authentication'],
-    //     summary: 'Seed the database and create owner account (Emad)',
-    //     security: [], // No auth required
-    //     responses: {
-    //       '200': { description: 'Database successfully seeded' }
-    //     }
-    //   }
-    // },
+    '/auth/setup': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Seed the database auth',
+        security: [], // No auth required
+        responses: {
+          '200': { description: 'Database successfully seeded' }
+        }
+      }
+    },
     '/auth/logout': {
       post: {
         tags: ['Authentication'],

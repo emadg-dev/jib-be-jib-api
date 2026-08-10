@@ -2,7 +2,7 @@ export interface AuthenticatedUser {
   id: string;
   name: string;
   display_name: string;
-  role?: 'owner' | 'member';
+  role?: 'owner' | 'member' | 'admin';
   trip_id?: string;
   preferences?: Record<string, boolean>;
   avatar?: string;

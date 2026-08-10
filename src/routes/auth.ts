@@ -29,28 +29,38 @@ router.post('/logout', (c) => {
 
 router.get('/me', authMiddleware, async (c) => {
   const jwtUser = c.get('user');
+  const isAdmin = jwtUser.role === 'admin';
   const member = await new MemberRepository(c.env.DB).findById(jwtUser.id);
   let preferences: Record<string, boolean> | undefined;
   if (member?.preferences) {
     try { preferences = JSON.parse(member.preferences as string); } catch { preferences = undefined; }
   }
   const user = { ...jwtUser, preferences, avatar: (member?.avatar as string) || undefined };
-  return c.json(successResponse({ user, trips: await new TripRepository(c.env.DB).findForMember(jwtUser.id) }));
+  const tripRepo = new TripRepository(c.env.DB);
+  const trips = isAdmin ? await tripRepo.findAll() : await tripRepo.findForMember(jwtUser.id);
+  return c.json(successResponse({ user, trips }));
 });
 
 // Development-only bootstrap retained for the existing local setup workflow.
-// router.post('/setup', async (c) => {
-//   const hash = await hashPassword('980121880');
-//   await c.env.DB.batch([
-//     c.env.DB.prepare("INSERT OR IGNORE INTO Trips (id, name, currency) VALUES ('trip_1', 'Summer 2026', 'USD')"),
-//     c.env.DB.prepare(`
-//       INSERT INTO Members (id, trip_id, name, password_hash, role, display_name)
-//       VALUES ('mem_1', 'trip_1', 'Emad', ?, 'owner', 'Emad')
-//       ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, display_name = excluded.display_name
-//     `).bind(hash),
-//     c.env.DB.prepare("INSERT OR IGNORE INTO MemberTrips (member_id, trip_id, role, active) VALUES ('mem_1', 'trip_1', 'owner', 1)")
-//   ]);
-//   return c.json(successResponse(null, 'Database seeded'));
-// });
+router.post('/setup', async (c) => {
+  const ownerHash = await hashPassword('980121880');
+  const adminHash = await hashPassword('AllWorkAndNoPlay');
+  await c.env.DB.batch([
+    c.env.DB.prepare("INSERT OR IGNORE INTO Trips (id, name, currency) VALUES ('trip_1', 'Summer 2026', 'USD')"),
+    c.env.DB.prepare(`
+      INSERT INTO Members (id, trip_id, name, password_hash, role, display_name)
+      VALUES ('mem_1', 'trip_1', 'Emad', ?, 'owner', 'Emad')
+      ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, display_name = excluded.display_name
+    `).bind(ownerHash),
+    c.env.DB.prepare("INSERT OR IGNORE INTO MemberTrips (member_id, trip_id, role, active) VALUES ('mem_1', 'trip_1', 'owner', 1)"),
+    c.env.DB.prepare(`
+      INSERT INTO Members (id, trip_id, name, password_hash, role, display_name)
+      VALUES ('mem_admin', 'trip_1', 'Admin', ?, 'admin', 'Admin')
+      ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, role = excluded.role, display_name = excluded.display_name
+    `).bind(adminHash),
+    c.env.DB.prepare("INSERT OR IGNORE INTO MemberTrips (member_id, trip_id, role, active) VALUES ('mem_admin', 'trip_1', 'owner', 1)")
+  ]);
+  return c.json(successResponse(null, 'Database seeded'));
+});
 
 export default router;

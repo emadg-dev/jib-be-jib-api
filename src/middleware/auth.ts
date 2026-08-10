@@ -20,6 +20,7 @@ export const authMiddleware = async (c: Context<Env>, next: Next) => {
 
 export const requireActiveTrip = async (c: Context<Env>, next: Next) => {
   const user = c.get('user');
+  if (user.role === 'admin') return next();
   if (!user.trip_id) return c.json(errorResponse('Select a trip before continuing'), 409);
 
   const membership = await c.env.DB.prepare(
@@ -33,6 +34,6 @@ export const requireActiveTrip = async (c: Context<Env>, next: Next) => {
 
 export const requireOwner = async (c: Context<Env>, next: Next) => {
   const user = c.get('user');
-  if (user.role !== 'owner') return c.json(errorResponse('Forbidden: Requires owner role'), 403);
+  if (user.role !== 'owner' && user.role !== 'admin') return c.json(errorResponse('Forbidden: Requires owner role'), 403);
   await next();
 };

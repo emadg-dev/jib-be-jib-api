@@ -25,6 +25,10 @@ export class TripRepository {
     `).bind(memberId).all()).results;
   }
 
+  async findAll() {
+    return (await this.db.prepare('SELECT * FROM Trips ORDER BY created_at ASC').all()).results;
+  }
+
   async findMembership(memberId: string, tripId: string) {
     return this.db.prepare(`
       SELECT mt.role, mt.active, t.name, t.currency
