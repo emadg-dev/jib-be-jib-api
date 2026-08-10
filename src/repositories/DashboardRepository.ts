@@ -7,6 +7,7 @@ export class DashboardRepository {
         m.id AS member_id,
         m.name,
         m.display_name,
+        m.avatar,
         mt.active,
         COALESCE(d.total_deposited, 0) AS total_deposited,
         COALESCE(w.total_expenses, 0) AS total_expenses,
@@ -26,7 +27,7 @@ export class DashboardRepository {
         WHERE w.trip_id = ?
         GROUP BY wm.member_id
       ) w ON m.id = w.member_id
-      WHERE mt.trip_id = ?
+      WHERE mt.trip_id = ? AND m.role != 'admin'
       ORDER BY m.display_name COLLATE NOCASE ASC
     `;
     return (await this.db.prepare(sql).bind(tripId, tripId, tripId).all()).results;

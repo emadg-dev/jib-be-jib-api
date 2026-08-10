@@ -57,8 +57,7 @@ router.post('/setup', async (c) => {
       INSERT INTO Members (id, trip_id, name, password_hash, role, display_name)
       VALUES ('mem_admin', 'trip_1', 'Admin', ?, 'admin', 'Admin')
       ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, role = excluded.role, display_name = excluded.display_name
-    `).bind(adminHash),
-    c.env.DB.prepare("INSERT OR IGNORE INTO MemberTrips (member_id, trip_id, role, active) VALUES ('mem_admin', 'trip_1', 'owner', 1)")
+    `).bind(adminHash)
   ]);
   return c.json(successResponse(null, 'Database seeded'));
 });

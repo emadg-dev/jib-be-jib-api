@@ -6,11 +6,11 @@ export class WithdrawalRepository {
       'SELECT * FROM Withdrawals WHERE trip_id = ? ORDER BY date DESC, created_at DESC'
     ).bind(tripId).all()).results;
     const beneficiaries = (await this.db.prepare(`
-      SELECT wm.*, m.display_name AS member_name
+      SELECT wm.*, m.display_name AS member_name, m.avatar AS member_avatar
       FROM WithdrawalMembers wm
       JOIN Withdrawals w ON w.id = wm.withdrawal_id
       JOIN Members m ON wm.member_id = m.id
-      WHERE w.trip_id = ?
+      WHERE w.trip_id = ? AND m.role != 'admin'
     `).bind(tripId).all()).results;
 
     return withdrawals.map((withdrawal: any) => ({

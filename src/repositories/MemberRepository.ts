@@ -15,20 +15,20 @@ export class MemberRepository {
 
   async findAll(tripId: string) {
     return (await this.db.prepare(`
-      SELECT m.id, m.name, m.display_name, mt.role, mt.active, mt.created_at
+      SELECT m.id, m.name, m.display_name, m.avatar, mt.role, mt.active, mt.created_at
       FROM MemberTrips mt
       JOIN Members m ON m.id = mt.member_id
-      WHERE mt.trip_id = ?
+      WHERE mt.trip_id = ? AND m.role != 'admin'
       ORDER BY m.display_name COLLATE NOCASE ASC
     `).bind(tripId).all()).results;
   }
 
   async findInTrip(memberId: string, tripId: string) {
     return this.db.prepare(`
-      SELECT m.id, m.name, m.display_name, mt.role, mt.active, mt.created_at
+      SELECT m.id, m.name, m.display_name, m.avatar, mt.role, mt.active, mt.created_at
       FROM MemberTrips mt
       JOIN Members m ON m.id = mt.member_id
-      WHERE mt.member_id = ? AND mt.trip_id = ?
+      WHERE mt.member_id = ? AND mt.trip_id = ? AND m.role != 'admin'
     `).bind(memberId, tripId).first();
   }
 
@@ -36,12 +36,14 @@ export class MemberRepository {
     await this.db.batch([
       this.db.prepare('INSERT INTO Members (id, trip_id, name, password_hash, role, display_name) VALUES (?, ?, ?, ?, ?, ?)')
         .bind(id, tripId, name, hash, role, displayName),
-      this.db.prepare('INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES (?, ?, ?, ?)')
-        .bind(id, tripId, role, Number(active))
+      ...(role !== 'admin' ? [this.db.prepare('INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES (?, ?, ?, ?)')
+        .bind(id, tripId, role, Number(active))] : [])
     ]);
   }
 
   async addToTrip(memberId: string, tripId: string, role: string, active: boolean) {
+    const member = await this.db.prepare('SELECT role FROM Members WHERE id = ?').bind(memberId).first<{ role: string }>();
+    if (member?.role === 'admin') return;
     return this.db.prepare(`
       INSERT INTO MemberTrips (member_id, trip_id, role, active)
       VALUES (?, ?, ?, ?)

@@ -39,10 +39,15 @@ export class TripRepository {
   }
 
   async create(id: string, name: string, currency: string, ownerId: string) {
-    await this.db.batch([
-      this.db.prepare('INSERT INTO Trips (id, name, currency) VALUES (?, ?, ?)').bind(id, name, currency),
-      this.db.prepare("INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES (?, ?, 'owner', 1)").bind(ownerId, id)
-    ]);
+    const owner = await this.db.prepare('SELECT role FROM Members WHERE id = ?').bind(ownerId).first<{ role: string }>();
+    if (owner?.role === 'admin') {
+      await this.db.prepare('INSERT INTO Trips (id, name, currency) VALUES (?, ?, ?)').bind(id, name, currency).run();
+    } else {
+      await this.db.batch([
+        this.db.prepare('INSERT INTO Trips (id, name, currency) VALUES (?, ?, ?)').bind(id, name, currency),
+        this.db.prepare("INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES (?, ?, 'owner', 1)").bind(ownerId, id)
+      ]);
+    }
     return this.findById(id);
   }
 
