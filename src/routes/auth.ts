@@ -48,14 +48,14 @@ router.post('/setup', async (c) => {
   await c.env.DB.batch([
     c.env.DB.prepare("INSERT OR IGNORE INTO Trips (id, name, currency) VALUES ('trip_1', 'Summer 2026', 'USD')"),
     c.env.DB.prepare(`
-      INSERT INTO Members (id, trip_id, name, password_hash, role, display_name)
-      VALUES ('mem_1', 'trip_1', 'Emad', ?, 'owner', 'Emad')
+      INSERT INTO Members (id, name, password_hash, role, display_name)
+      VALUES ('mem_1', 'Emad', ?, 'owner', 'Emad')
       ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, display_name = excluded.display_name
     `).bind(ownerHash),
     c.env.DB.prepare("INSERT OR IGNORE INTO MemberTrips (member_id, trip_id, role, active) VALUES ('mem_1', 'trip_1', 'owner', 1)"),
     c.env.DB.prepare(`
-      INSERT INTO Members (id, trip_id, name, password_hash, role, display_name)
-      VALUES ('mem_admin', 'trip_1', 'Admin', ?, 'admin', 'Admin')
+      INSERT INTO Members (id, name, password_hash, role, display_name)
+      VALUES ('mem_admin', 'Admin', ?, 'admin', 'Admin')
       ON CONFLICT(name) DO UPDATE SET password_hash = excluded.password_hash, role = excluded.role, display_name = excluded.display_name
     `).bind(adminHash)
   ]);

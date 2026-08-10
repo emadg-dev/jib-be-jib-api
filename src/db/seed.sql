@@ -2,11 +2,11 @@
 INSERT INTO Trips (id, name, currency) VALUES ('trip_1', 'Summer 2026', 'USD');
 
 -- Hash for 'password123' (pre-generated using the PBKDF2 utility).
-INSERT INTO Members (id, trip_id, name, password_hash, role, display_name) VALUES
-('mem_1', 'trip_1', 'Emad', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'owner', 'Emad'),
-('mem_2', 'trip_1', 'Ali', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'member', 'Ali'),
-('mem_3', 'trip_1', 'Sara', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'member', 'Sara'),
-('mem_4', 'trip_1', 'Mohammad', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'member', 'Mohammad');
+INSERT INTO Members (id, name, password_hash, role, display_name) VALUES
+('mem_1', 'Emad', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'owner', 'Emad'),
+('mem_2', 'Ali', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'member', 'Ali'),
+('mem_3', 'Sara', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'member', 'Sara'),
+('mem_4', 'Mohammad', '54c600f918e61cb05bd43372c3d9735d482596abf284f6d4d1dae8bd203a3dff:8fa85bb2', 'member', 'Mohammad');
 
 INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES
 ('mem_1', 'trip_1', 'owner', 1), ('mem_2', 'trip_1', 'member', 1),

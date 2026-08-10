@@ -14,17 +14,13 @@ CREATE TABLE Trips (
 
 CREATE TABLE Members (
     id TEXT PRIMARY KEY,
-    -- Legacy fields are retained for compatibility with existing databases.
-    -- MemberTrips is the authoritative trip relationship and role.
-    trip_id TEXT NOT NULL,
     name TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'member',
     display_name TEXT NOT NULL,
     preferences TEXT,
     avatar TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE MemberTrips (

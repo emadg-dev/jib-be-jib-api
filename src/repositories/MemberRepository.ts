@@ -34,8 +34,8 @@ export class MemberRepository {
 
   async create(id: string, tripId: string, name: string, displayName: string, hash: string, role: string, active: boolean) {
     await this.db.batch([
-      this.db.prepare('INSERT INTO Members (id, trip_id, name, password_hash, role, display_name) VALUES (?, ?, ?, ?, ?, ?)')
-        .bind(id, tripId, name, hash, role, displayName),
+      this.db.prepare('INSERT INTO Members (id, name, password_hash, role, display_name) VALUES (?, ?, ?, ?, ?)')
+        .bind(id, name, hash, role, displayName),
       ...(role !== 'admin' ? [this.db.prepare('INSERT INTO MemberTrips (member_id, trip_id, role, active) VALUES (?, ?, ?, ?)')
         .bind(id, tripId, role, Number(active))] : [])
     ]);
