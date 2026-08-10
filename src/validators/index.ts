@@ -33,6 +33,15 @@ export const changePasswordSchema = z.object({
   new_password: z.string().min(6, 'New password must be at least 6 characters')
 });
 
+export const preferencesSchema = z.record(z.string(), z.boolean());
+
+export const avatarSchema = z.object({
+  avatar: z.union([
+    z.string().startsWith('data:image/', 'Avatar must be an image data URL').max(200000, 'Avatar is too large'),
+    z.literal('')
+  ])
+});
+
 export const depositSchema = z.object({
   member_id: z.string().min(1, 'Member is required'),
   amount: z.number().positive('Amount must be positive'),

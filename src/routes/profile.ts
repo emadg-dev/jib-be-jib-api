@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from '../types/env';
 import { zValidator } from '@hono/zod-validator';
-import { changePasswordSchema } from '../validators';
+import { changePasswordSchema, preferencesSchema, avatarSchema } from '../validators';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { successResponse } from '../utils/response';
 import { authMiddleware } from '../middleware/auth';
@@ -32,6 +32,21 @@ router.put('/password', zValidator('json', changePasswordSchema), async (c) => {
   const hash = await hashPassword(new_password);
   await getRepo(c).updatePassword(user.id, hash);
   return c.json(successResponse(null, 'Password updated'));
+});
+
+router.put('/preferences', zValidator('json', preferencesSchema), async (c) => {
+  const user = c.get('user');
+  const preferences = c.req.valid('json');
+  await getRepo(c).updatePreferences(user.id, JSON.stringify(preferences));
+  return c.json(successResponse(preferences, 'Preferences updated'));
+});
+
+router.put('/avatar', zValidator('json', avatarSchema), async (c) => {
+  const user = c.get('user');
+  const { avatar } = c.req.valid('json');
+  const value = avatar === '' ? null : avatar;
+  await getRepo(c).updateAvatar(user.id, value);
+  return c.json(successResponse({ avatar: value }, 'Avatar updated'));
 });
 
 export default router;

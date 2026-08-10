@@ -64,16 +64,16 @@ const openApiSpec = {
         }
       }
     },
-    '/auth/setup': {
-      post: {
-        tags: ['Authentication'],
-        summary: 'Seed the database and create owner account (Emad)',
-        security: [], // No auth required
-        responses: {
-          '200': { description: 'Database successfully seeded' }
-        }
-      }
-    },
+    // '/auth/setup': {
+    //   post: {
+    //     tags: ['Authentication'],
+    //     summary: 'Seed the database and create owner account (Emad)',
+    //     security: [], // No auth required
+    //     responses: {
+    //       '200': { description: 'Database successfully seeded' }
+    //     }
+    //   }
+    // },
     '/auth/logout': {
       post: {
         tags: ['Authentication'],
@@ -193,6 +193,61 @@ const openApiSpec = {
           }
         },
         responses: { '200': { description: 'Password updated' }, '400': { description: 'Current password is incorrect' } }
+      }
+    },
+    '/profile/preferences': {
+      put: {
+        tags: ['Profile'],
+        summary: 'Update current user preferences',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'User preference settings',
+                additionalProperties: true
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Preferences updated'
+          }
+        }
+      }
+    },
+
+    '/profile/avatar': {
+      put: {
+        tags: ['Profile'],
+        summary: 'Update current user avatar',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['avatar'],
+                properties: {
+                  avatar: {
+                    type: 'string',
+                    description: 'Avatar URL or base64 encoded image data'
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Avatar updated'
+          },
+          '400': {
+            description: 'Invalid avatar data'
+          }
+        }
       }
     },
     '/members': {

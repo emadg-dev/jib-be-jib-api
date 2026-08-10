@@ -42,18 +42,29 @@ export class AuthService {
   }
 
   private user(member: Record<string, unknown>, trip?: { id: string; role: 'owner' | 'member' }) {
+    let preferences: Record<string, boolean> | undefined;
+    if (member.preferences) {
+      try { preferences = JSON.parse(member.preferences as string); } catch { preferences = undefined; }
+    }
     return {
       id: member.id as string,
       name: member.name as string,
       display_name: (member.display_name || member.name) as string,
       role: trip?.role,
-      trip_id: trip?.id
+      trip_id: trip?.id,
+      preferences,
+      avatar: (member.avatar as string) || undefined
     };
   }
 
   private async sign(member: Record<string, unknown>, trip?: { id: string; role: 'owner' | 'member' }) {
+    // Keep the JWT payload lean: avatar/preferences are fetched from the DB, not stored in the token.
     return sign({
-      ...this.user(member, trip),
+      id: member.id as string,
+      name: member.name as string,
+      display_name: (member.display_name || member.name) as string,
+      role: trip?.role,
+      trip_id: trip?.id,
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
     }, this.jwtSecret, 'HS256');
   }

@@ -4,6 +4,8 @@ export interface AuthenticatedUser {
   display_name: string;
   role?: 'owner' | 'member';
   trip_id?: string;
+  preferences?: Record<string, boolean>;
+  avatar?: string;
 }
 
 export interface Env {

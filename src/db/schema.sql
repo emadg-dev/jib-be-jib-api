@@ -21,6 +21,8 @@ CREATE TABLE Members (
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'member',
     display_name TEXT NOT NULL,
+    preferences TEXT,
+    avatar TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE
 );
