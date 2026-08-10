@@ -35,11 +35,12 @@ export class AuthService {
 
   async selectTrip(memberId: string, tripId: string) {
     const member = await this.memberRepo.findById(memberId);
+    if (!member) throw new HTTPException(404, { message: 'Member not found' });
     const isAdmin = (member as any)?.role === 'admin';
 
     if (!isAdmin) {
       const membership = await this.tripRepo.findMembership(memberId, tripId) as { role: 'owner' | 'member'; active: number } | null;
-      if (!member || !membership || !membership.active) {
+      if (!membership || !membership.active) {
         throw new HTTPException(403, { message: 'You do not have an active membership in this trip' });
       }
       const token = await this.sign(member, { id: tripId, role: membership.role });
