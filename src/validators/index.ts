@@ -42,6 +42,10 @@ export const avatarSchema = z.object({
   ])
 });
 
+export const displayNameSchema = z.object({
+  display_name: z.string().min(1, 'Name is required').max(50, 'Name is too long')
+});
+
 export const depositSchema = z.object({
   member_id: z.string().min(1, 'Member is required'),
   amount: z.number().positive('Amount must be positive'),

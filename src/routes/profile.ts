@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from '../types/env';
 import { zValidator } from '@hono/zod-validator';
-import { changePasswordSchema, preferencesSchema, avatarSchema } from '../validators';
+import { changePasswordSchema, preferencesSchema, avatarSchema, displayNameSchema } from '../validators';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { successResponse } from '../utils/response';
 import { authMiddleware } from '../middleware/auth';
@@ -47,6 +47,13 @@ router.put('/avatar', zValidator('json', avatarSchema), async (c) => {
   const value = avatar === '' ? null : avatar;
   await getRepo(c).updateAvatar(user.id, value);
   return c.json(successResponse({ avatar: value }, 'Avatar updated'));
+});
+
+router.put('/', zValidator('json', displayNameSchema), async (c) => {
+  const user = c.get('user');
+  const { display_name } = c.req.valid('json');
+  await c.env.DB.prepare('UPDATE Members SET display_name = ? WHERE id = ?').bind(display_name, user.id).run();
+  return c.json(successResponse({ display_name }, 'Profile updated'));
 });
 
 export default router;
