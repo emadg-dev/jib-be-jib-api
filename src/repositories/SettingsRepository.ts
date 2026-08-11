@@ -10,6 +10,12 @@ export class SettingsRepository {
     }>();
   }
 
+  async findByTelegramChatId(chatId: string) {
+    return this.db.prepare(
+      'SELECT trip_id, telegram_chat_id FROM TripSettings WHERE telegram_chat_id = ? AND telegram_enabled = 1'
+    ).bind(chatId).first<{ trip_id: string; telegram_chat_id: string }>();
+  }
+
   async upsert(tripId: string, telegramEnabled: boolean, telegramChatId: string | null, eventsJson: string) {
     return this.db.prepare(`
       INSERT INTO TripSettings (trip_id, telegram_enabled, telegram_chat_id, telegram_events, updated_at)

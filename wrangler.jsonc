@@ -21,5 +21,8 @@
 			"database_id": "064ba47f-0006-493e-8f11-493bf3c7df6c",
 			"migrations_dir": "src/db/migrations"
 		}
-	]
+	],
+	"vars": {
+		"TELEGRAM_NOTIFICATIONS_ENABLED": "true"
+	}
 }
