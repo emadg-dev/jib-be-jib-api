@@ -53,6 +53,13 @@ export const depositSchema = z.object({
   date: z.string().optional()
 });
 
+export const telegramNotificationSchema = z.object({
+  event: z.string().min(1, 'Event is required'),
+  title: z.string().min(1, 'Title is required'),
+  message: z.string().min(1, 'Message is required'),
+  metadata: z.record(z.string(), z.unknown()).default({})
+});
+
 export const withdrawalSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   category: z.string().min(1, 'Category is required'),

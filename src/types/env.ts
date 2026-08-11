@@ -12,6 +12,9 @@ export interface Env {
   Bindings: {
     DB: D1Database;
     JWT_SECRET: string;
+    TELEGRAM_WEBHOOK_URL: string;
+    TELEGRAM_CHAT_ID: string;
+    TELEGRAM_NOTIFICATIONS_ENABLED: string;
   };
   Variables: {
     user: AuthenticatedUser;

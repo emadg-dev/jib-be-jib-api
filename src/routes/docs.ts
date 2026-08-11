@@ -355,6 +355,33 @@ const openApiSpec = {
         },
         responses: { '201': { description: 'Withdrawal created' } }
       }
+    },
+    '/notifications/telegram': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Forward a notification to the configured Telegram webhook',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event', 'title', 'message'],
+                properties: {
+                  event: { type: 'string', example: 'member_added' },
+                  title: { type: 'string', example: 'New member added' },
+                  message: { type: 'string', example: 'Ali joined the trip' },
+                  metadata: { type: 'object', additionalProperties: true }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Notification forwarded (or skipped when disabled)' },
+          '401': { description: 'Unauthenticated' }
+        }
+      }
     }
   }
 };

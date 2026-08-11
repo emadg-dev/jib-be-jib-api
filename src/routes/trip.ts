@@ -9,6 +9,7 @@ import { MemberRepository } from '../repositories/MemberRepository';
 import { successResponse } from '../utils/response';
 import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
 import { setCookie } from 'hono/cookie';
+import { notificationServiceFromEnv } from '../services/NotificationService';
 
 const router = new Hono<Env>();
 router.use('*', authMiddleware);
@@ -24,7 +25,17 @@ router.post('/select', zValidator('json', selectTripSchema), async (c) => {
 });
 
 router.post('/', zValidator('json', tripSchema), async (c) => {
-  return c.json(successResponse(await tripService(c).createTrip(c.get('user').id, c.req.valid('json'))), 201);
+  const data = c.req.valid('json');
+  const trip = await tripService(c).createTrip(c.get('user').id, data);
+  c.executionCtx.waitUntil(
+    notificationServiceFromEnv(c.env).send({
+      event: 'trip_created',
+      title: 'Trip created',
+      message: `Trip "${data.name}" was created`,
+      metadata: { id: (trip as any)?.id, name: data.name, currency: data.currency }
+    })
+  );
+  return c.json(successResponse(trip), 201);
 });
 
 router.get('/', requireActiveTrip, async (c) => {
@@ -43,7 +54,16 @@ router.put('/:id', requireOwner, zValidator('json', tripSchema), async (c) => {
       return c.json({ success: false, error: 'Forbidden: Requires owner role in this trip' }, 403);
     }
   }
-  return c.json(successResponse(await tripService(c).updateTrip(tripId, data.name, data.currency)));
+  const updated = await tripService(c).updateTrip(tripId, data.name, data.currency);
+  c.executionCtx.waitUntil(
+    notificationServiceFromEnv(c.env).send({
+      event: 'trip_updated',
+      title: 'Trip updated',
+      message: `Trip "${data.name}" was updated`,
+      metadata: { id: tripId, name: data.name, currency: data.currency }
+    })
+  );
+  return c.json(successResponse(updated));
 });
 
 router.delete('/delete/:id', requireOwner, async (c) => {
