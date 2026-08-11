@@ -29,7 +29,7 @@ export const DEFAULT_NOTIFICATION_EVENTS: Record<NotificationEvent, TelegramEven
   trip_updated: { enabled: true, message: 'Trip "{trip_name}" was updated.' },
   member_added: { enabled: true, message: '{member_name} joined the trip.' },
   deposit_created: { enabled: true, message: '{member_name} deposited {amount}.' },
-  expense_created: { enabled: true, message: 'Expense {description} ({category}) was added for {amount}.' }
+  expense_created: { enabled: true, message: 'Expense {description} ({category}) was added for {amount}.\nBenefactors: {benefactors}' }
 };
 
 export const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {

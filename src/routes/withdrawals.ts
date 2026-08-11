@@ -22,7 +22,12 @@ router.post('/', zValidator('json', withdrawalSchema), async (c) => {
       trip_id: tripId(c),
       title: 'Expense added',
       message: `${data.description} (${data.category}) — ${data.amount}`,
-      metadata: { description: data.description, category: data.category, amount: data.amount }
+      metadata: {
+        description: data.description,
+        category: data.category,
+        amount: data.amount,
+        benefactor_member_ids: data.beneficiaries.map((b: { member_id: string }) => b.member_id)
+      }
     })
   );
   return c.json(successResponse(withdrawal), 201);

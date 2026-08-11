@@ -87,6 +87,22 @@ export class TelegramNotificationService implements NotificationService {
         .bind(tripId).first<{ name: string }>();
       if (trip) out.trip_name = trip.name;
     }
+    if (out.benefactor_member_ids && !out.benefactors) {
+      const memberIds = out.benefactor_member_ids as string[];
+      const totalMembers = await this.db.prepare(
+        'SELECT COUNT(*) AS count FROM MemberTrips WHERE trip_id = ? AND active = 1'
+      ).bind(tripId).first<{ count: number }>();
+
+      if (totalMembers && memberIds.length >= totalMembers.count) {
+        out.benefactors = 'همه';
+      } else {
+        const placeholders = memberIds.map(() => '?').join(', ');
+        const members = await this.db.prepare(
+          `SELECT display_name FROM Members WHERE id IN (${placeholders}) AND role != 'admin'`
+        ).bind(...memberIds).all<{ display_name: string }>();
+        out.benefactors = members.results.map(m => m.display_name).join(', ');
+      }
+    }
     return out;
   }
 
