@@ -19,6 +19,7 @@ router.post('/', zValidator('json', withdrawalSchema), async (c) => {
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
       event: 'expense_created',
+      trip_id: tripId(c),
       title: 'Expense added',
       message: `${data.description} (${data.category}) — ${data.amount}`,
       metadata: { description: data.description, category: data.category, amount: data.amount }

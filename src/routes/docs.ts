@@ -368,7 +368,7 @@ const openApiSpec = {
                 type: 'object',
                 required: ['event', 'title', 'message'],
                 properties: {
-                  event: { type: 'string', example: 'member_added' },
+                  event: { type: 'string', enum: ['trip_created', 'trip_updated', 'member_added', 'deposit_created', 'expense_created'], example: 'member_added' },
                   title: { type: 'string', example: 'New member added' },
                   message: { type: 'string', example: 'Ali joined the trip' },
                   metadata: { type: 'object', additionalProperties: true }
@@ -380,6 +380,102 @@ const openApiSpec = {
         responses: {
           '200': { description: 'Notification forwarded (or skipped when disabled)' },
           '401': { description: 'Unauthenticated' }
+        }
+      }
+    },
+    '/notifications/telegram/test': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Send a raw test message to a Telegram chat ID',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['chat_id', 'message'],
+                properties: {
+                  chat_id: { type: 'string', example: '-1001234567890' },
+                  title: { type: 'string', example: 'Test notification' },
+                  message: { type: 'string', example: 'This is a test message' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Test notification sent (delivered: true/false in data)' },
+          '401': { description: 'Unauthenticated' }
+        }
+      }
+    },
+    '/notifications/settings': {
+      get: {
+        tags: ['Notifications'],
+        summary: 'Get Telegram notification settings for the selected trip',
+        responses: {
+          '200': {
+            description: 'Current Telegram settings',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    telegram_enabled: { type: 'boolean', example: true },
+                    telegram_chat_id: { type: 'string', nullable: true },
+                    events: {
+                      type: 'object',
+                      additionalProperties: {
+                        type: 'object',
+                        properties: {
+                          enabled: { type: 'boolean' },
+                          message: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { description: 'Unauthenticated' },
+          '409': { description: 'No trip selected' }
+        }
+      },
+      put: {
+        tags: ['Notifications'],
+        summary: 'Update Telegram notification settings for the selected trip (Owner only)',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['telegram_enabled'],
+                properties: {
+                  telegram_enabled: { type: 'boolean' },
+                  telegram_chat_id: { type: 'string', description: 'Leave empty to clear' },
+                  events: {
+                    type: 'object',
+                    description: 'Partial per-event overrides',
+                    additionalProperties: {
+                      type: 'object',
+                      properties: {
+                        enabled: { type: 'boolean' },
+                        message: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Updated Telegram settings' },
+          '403': { description: 'Requires owner role' },
+          '401': { description: 'Unauthenticated' },
+          '409': { description: 'No trip selected' }
         }
       }
     }

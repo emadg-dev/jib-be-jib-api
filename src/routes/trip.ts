@@ -30,9 +30,10 @@ router.post('/', zValidator('json', tripSchema), async (c) => {
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
       event: 'trip_created',
+      trip_id: (trip as any)?.id,
       title: 'Trip created',
       message: `Trip "${data.name}" was created`,
-      metadata: { id: (trip as any)?.id, name: data.name, currency: data.currency }
+      metadata: { name: data.name, currency: data.currency }
     })
   );
   return c.json(successResponse(trip), 201);
@@ -58,9 +59,10 @@ router.put('/:id', requireOwner, zValidator('json', tripSchema), async (c) => {
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
       event: 'trip_updated',
+      trip_id: tripId,
       title: 'Trip updated',
       message: `Trip "${data.name}" was updated`,
-      metadata: { id: tripId, name: data.name, currency: data.currency }
+      metadata: { name: data.name, currency: data.currency }
     })
   );
   return c.json(successResponse(updated));

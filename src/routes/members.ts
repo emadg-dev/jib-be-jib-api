@@ -19,6 +19,7 @@ router.post('/add', requireOwner, zValidator('json', addMemberToTripSchema), asy
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
       event: 'member_added',
+      trip_id: tripId(c),
       title: 'New member added',
       message: `${(member as any)?.display_name} joined the trip`,
       metadata: { member_id: (member as any)?.id }
@@ -32,6 +33,7 @@ router.post('/', requireOwner, zValidator('json', memberSchema), async (c) => {
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
       event: 'member_added',
+      trip_id: tripId(c),
       title: 'New member added',
       message: `${(member as any)?.display_name} joined the trip`,
       metadata: { member_id: (member as any)?.id }

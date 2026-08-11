@@ -66,6 +66,15 @@ CREATE TABLE WithdrawalMembers (
     FOREIGN KEY (member_id) REFERENCES Members(id) ON DELETE CASCADE
 );
 
+CREATE TABLE TripSettings (
+    trip_id TEXT PRIMARY KEY,
+    telegram_enabled INTEGER NOT NULL DEFAULT 0 CHECK(telegram_enabled IN (0, 1)),
+    telegram_chat_id TEXT,
+    telegram_events TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE
+);
+
 CREATE INDEX idx_member_trips_trip ON MemberTrips(trip_id);
 CREATE INDEX idx_deposits_trip ON Deposits(trip_id);
 CREATE INDEX idx_withdrawals_trip ON Withdrawals(trip_id);
