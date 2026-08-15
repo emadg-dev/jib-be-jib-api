@@ -52,6 +52,7 @@ CREATE TABLE Withdrawals (
     description TEXT NOT NULL,
     category TEXT NOT NULL,
     amount REAL NOT NULL CHECK(amount > 0),
+    paid_by TEXT REFERENCES Members(id),
     date TEXT DEFAULT (DATE('now')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (trip_id) REFERENCES Trips(id) ON DELETE CASCADE

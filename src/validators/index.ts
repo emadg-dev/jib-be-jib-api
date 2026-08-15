@@ -82,6 +82,7 @@ export const withdrawalSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   category: z.string().min(1, 'Category is required'),
   amount: z.number().positive('Amount must be positive'),
+  paid_by: z.string().nullable().optional(),
   beneficiaries: z.array(z.object({
     member_id: z.string(),
     share: z.number().nonnegative()

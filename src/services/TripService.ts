@@ -72,13 +72,13 @@ export class WithdrawalService {
   async getWithdrawals(tripId: string) { return this.repo.findAll(tripId); }
   async createWithdrawal(tripId: string, data: any) {
     const id = `wit_${crypto.randomUUID()}`;
-    if (!await this.repo.create(id, tripId, data.description, data.category, data.amount, data.beneficiaries, data.date)) {
+    if (!await this.repo.create(id, tripId, data.description, data.category, data.amount, data.beneficiaries, data.paid_by || null, data.date)) {
       throw new HTTPException(400, { message: 'All beneficiaries must be active members of this trip' });
     }
     return { id, ...data };
   }
   async updateWithdrawal(id: string, tripId: string, data: any) {
-    if (!await this.repo.update(id, tripId, data.description, data.category, data.amount, data.beneficiaries, data.date)) {
+    if (!await this.repo.update(id, tripId, data.description, data.category, data.amount, data.beneficiaries, data.paid_by || null, data.date)) {
       throw new HTTPException(400, { message: 'All beneficiaries must be active members of this trip' });
     }
     return { id, ...data };
@@ -92,9 +92,10 @@ export class DashboardService {
     const totals = await this.repo.getTotals(tripId);
     const members = await this.repo.getMemberStats(tripId);
     return {
-      currentBankBalance: totals.totalDeposits - totals.totalWithdrawals,
+      currentBankBalance: totals.totalDeposits - (totals.totalWithdrawals - totals.totalMemberPaid),
       totalDeposits: totals.totalDeposits,
       totalWithdrawals: totals.totalWithdrawals,
+      totalMemberPaid: totals.totalMemberPaid,
       members,
       categories: await this.repo.getExpensesByCategory(tripId),
       settlements: calculateSettlements(members as any)
