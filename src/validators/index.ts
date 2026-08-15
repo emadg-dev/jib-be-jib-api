@@ -54,7 +54,7 @@ export const depositSchema = z.object({
 });
 
 export const telegramNotificationSchema = z.object({
-  event: z.enum(['trip_created', 'trip_updated', 'member_added', 'deposit_created', 'expense_created']),
+  event: z.enum(['trip_created', 'trip_updated', 'member_added', 'deposit_created', 'expense_created', 'rating_submitted', 'settlement_recorded', 'members_report', 'bank_stats_report', 'settlements_report', 'ratings_report']),
   title: z.string().min(1, 'Title is required'),
   message: z.string().min(1, 'Message is required'),
   metadata: z.record(z.string(), z.unknown()).default({})
@@ -70,7 +70,7 @@ export const telegramSettingsSchema = z.object({
   telegram_enabled: z.boolean(),
   telegram_chat_id: z.string().optional(),
   events: z.record(
-    z.enum(['trip_created', 'trip_updated', 'member_added', 'deposit_created', 'expense_created']),
+    z.enum(['trip_created', 'trip_updated', 'member_added', 'deposit_created', 'expense_created', 'rating_submitted', 'settlement_recorded', 'members_report', 'bank_stats_report', 'settlements_report', 'ratings_report']),
     z.object({
       enabled: z.boolean().optional(),
       message: z.string().optional()
@@ -105,4 +105,8 @@ export const settlementSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   note: z.string().optional(),
   date: z.string().optional()
+});
+
+export const telegramSendSchema = z.object({
+  message: z.string().min(1, 'Message is required'),
 });

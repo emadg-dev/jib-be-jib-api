@@ -5,6 +5,7 @@ import { SettingsRepository } from '../repositories/SettingsRepository';
 export interface NotificationService {
   send(notification: TelegramNotification): Promise<boolean>;
   sendTest(chatId: string, title: string, message: string): Promise<boolean>;
+  sendRaw(tripId: string, message: string): Promise<boolean>;
 }
 
 export class TelegramNotificationService implements NotificationService {
@@ -53,6 +54,21 @@ export class TelegramNotificationService implements NotificationService {
   async sendTest(chatId: string, title: string, message: string): Promise<boolean> {
     if (!this.enabled || !this.webhookUrl || !chatId) return false;
     return this.post(chatId, `${title}\n${message}`);
+  }
+
+  async sendRaw(tripId: string, message: string): Promise<boolean> {
+    if (!this.enabled || !this.webhookUrl) return false;
+    try {
+      const settings = await this.settingsRepo.getByTrip(tripId);
+      const chatId = settings?.telegram_chat_id || this.defaultChatId;
+      if (!chatId) return false;
+      const masterEnabled = settings ? Number(settings.telegram_enabled) === 1 : true;
+      if (!masterEnabled) return false;
+      return this.post(chatId, message);
+    } catch (error) {
+      console.error('Telegram raw send failed', error);
+      return false;
+    }
   }
 
   private async post(chatId: string, text: string): Promise<boolean> {

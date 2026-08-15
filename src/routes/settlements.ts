@@ -6,6 +6,7 @@ import { SettlementRepository } from '../repositories/SettlementRepository';
 import { SettlementService } from '../services/TripService';
 import { successResponse } from '../utils/response';
 import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { notificationServiceFromEnv } from '../services/NotificationService';
 
 const router = new Hono<Env>();
 router.use('*', authMiddleware, requireActiveTrip);
@@ -16,6 +17,17 @@ router.get('/', requireOwner, async (c) => c.json(successResponse(await service(
 router.post('/', requireOwner, zValidator('json', settlementSchema), async (c) => {
   const data = c.req.valid('json');
   const settlement = await service(c).createSettlement(tripId(c), data);
+
+  c.executionCtx.waitUntil(
+    notificationServiceFromEnv(c.env).send({
+      event: 'settlement_recorded',
+      trip_id: tripId(c),
+      title: 'Settlement recorded',
+      message: `{member_name} settled ${data.amount}.`,
+      metadata: { member_id: data.member_id, amount: data.amount },
+    })
+  );
+
   return c.json(successResponse(settlement), 201);
 });
 router.put('/:id', requireOwner, zValidator('json', settlementSchema), async (c) => c.json(successResponse(await service(c).updateSettlement(c.req.param('id'), tripId(c), c.req.valid('json')))));

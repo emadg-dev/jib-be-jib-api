@@ -414,6 +414,75 @@ const openApiSpec = {
         }
       }
     },
+    '/notifications/telegram/send': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Send a custom message to the trip\'s Telegram group (Owner only)',
+        description: 'Sends a raw text message to the configured Telegram chat for the current trip.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['message'],
+                properties: {
+                  message: { type: 'string', example: 'Hello from Jib-be-Jib!' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Message sent (delivered: true/false)' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
+    '/notifications/telegram/members': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Send member financial breakdown to Telegram (Owner only)',
+        description: 'Formats a table of all members with deposits, expenses, and balances with emojis, then sends to the trip\'s Telegram group.',
+        responses: {
+          '200': { description: 'Member breakdown sent (delivered: true/false)' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
+    '/notifications/telegram/bank-stats': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Send bank stats to Telegram (Owner only)',
+        description: 'Sends a summary of bank balance, total deposits, expenses, and member credit/debt status to the trip\'s Telegram group.',
+        responses: {
+          '200': { description: 'Bank stats sent (delivered: true/false)' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
+    '/notifications/telegram/settlements': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Send settlements summary to Telegram (Owner only)',
+        description: 'Formats all recorded settlements with member names, amounts, and dates, then sends to the trip\'s Telegram group.',
+        responses: {
+          '200': { description: 'Settlements sent (delivered: true/false)' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
+    '/notifications/telegram/ratings': {
+      post: {
+        tags: ['Notifications'],
+        summary: 'Send member ratings to Telegram (Owner only)',
+        description: 'Formats aggregated ratings with star visuals, averages, and rater counts, then sends to the trip\'s Telegram group.',
+        responses: {
+          '200': { description: 'Ratings sent (delivered: true/false)' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
     '/notifications/settings': {
       get: {
         tags: ['Notifications'],
