@@ -773,7 +773,7 @@ const openApiSpec = {
       post: {
         tags: ['Settlements'],
         summary: 'Record a new settlement (Owner only)',
-        description: 'Record that the owner has paid off a member\'s debt to the bank.',
+        description: 'Record that the bank has paid a member who is owed money (creditor).',
         requestBody: {
           required: true,
           content: {
@@ -782,8 +782,8 @@ const openApiSpec = {
                 type: 'object',
                 required: ['member_id', 'amount'],
                 properties: {
-                  member_id: { type: 'string', description: 'ID of the member whose debt is being settled' },
-                  amount: { type: 'number', description: 'Amount settled', example: 50 },
+                  member_id: { type: 'string', description: 'ID of the member receiving payment (creditor)' },
+                  amount: { type: 'number', description: 'Amount paid to the member', example: 50 },
                   note: { type: 'string', description: 'Optional note' },
                   date: { type: 'string', description: 'ISO date (YYYY-MM-DD). Defaults to today if omitted' }
                 }

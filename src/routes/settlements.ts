@@ -23,7 +23,7 @@ router.post('/', requireOwner, zValidator('json', settlementSchema), async (c) =
       event: 'settlement_recorded',
       trip_id: tripId(c),
       title: 'Settlement recorded',
-      message: `{member_name} settled ${data.amount}.`,
+      message: `{member_name} received {amount} from the bank.`,
       metadata: { member_id: data.member_id, amount: data.amount },
     })
   );

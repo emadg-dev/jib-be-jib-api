@@ -37,7 +37,7 @@ export const DEFAULT_NOTIFICATION_EVENTS: Record<NotificationEvent, TelegramEven
   deposit_created: { enabled: true, message: '{member_name} deposited {amount}.' },
   expense_created: { enabled: true, message: 'Expense {description} ({category}) was added for {amount}.\nBenefactors: {benefactors}' },
   rating_submitted: { enabled: true, message: 'A member has submitted their ratings.' },
-  settlement_recorded: { enabled: true, message: '{member_name} settled {amount}.' },
+  settlement_recorded: { enabled: true, message: '{member_name} received {amount} from the bank.' },
   members_report: { enabled: true, message: '👥 *Member Financial Breakdown*\n━━━━━━━━━━━━━━━━━━━━━━\n\n{members_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n🏦 Bank Balance: {bank_balance}' },
   bank_stats_report: { enabled: true, message: '🏦 *Bank Stats*\n\n💰 Bank Balance: *{bank_balance}*\n📈 Total Deposits: {total_deposits}\n📉 Total Expenses: {total_expenses}\n{settled_line}\n\n👥 Members: {member_count}\n{creditors_line}\n{debtors_line}' },
   settlements_report: { enabled: true, message: '📋 *Settlements Summary*\n\n{settlements_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 Total Settled: *{total_settled}*\n📊 {settlement_count} settlement(s) recorded' },
