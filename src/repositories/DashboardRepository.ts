@@ -11,7 +11,8 @@ export class DashboardRepository {
         mt.active,
         COALESCE(d.total_deposited, 0) AS total_deposited,
         COALESCE(w.total_expenses, 0) AS total_expenses,
-        COALESCE(d.total_deposited, 0) + COALESCE(p.total_paid, 0) - COALESCE(w.total_expenses, 0) AS balance
+        COALESCE(s.total_settled, 0) AS total_settled,
+        COALESCE(d.total_deposited, 0) + COALESCE(p.total_paid, 0) - COALESCE(w.total_expenses, 0) - COALESCE(s.total_settled, 0) AS balance
       FROM MemberTrips mt
       JOIN Members m ON m.id = mt.member_id
       LEFT JOIN (
@@ -33,10 +34,16 @@ export class DashboardRepository {
         WHERE trip_id = ? AND paid_by IS NOT NULL
         GROUP BY paid_by
       ) p ON m.id = p.member_id
+      LEFT JOIN (
+        SELECT member_id, SUM(amount) AS total_settled
+        FROM Settlements
+        WHERE trip_id = ?
+        GROUP BY member_id
+      ) s ON m.id = s.member_id
       WHERE mt.trip_id = ? AND m.role != 'admin'
       ORDER BY m.display_name COLLATE NOCASE ASC
     `;
-    return (await this.db.prepare(sql).bind(tripId, tripId, tripId, tripId).all()).results;
+    return (await this.db.prepare(sql).bind(tripId, tripId, tripId, tripId, tripId).all()).results;
   }
 
   async getTotals(tripId: string) {

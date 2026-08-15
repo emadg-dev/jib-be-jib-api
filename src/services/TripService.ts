@@ -110,7 +110,7 @@ export class DashboardService {
     const members = await this.repo.getMemberStats(tripId);
     const totalSettled = await this.settlementRepo.getTotalSettled(tripId);
     return {
-      currentBankBalance: totals.totalDeposits + totalSettled - (totals.totalWithdrawals - totals.totalMemberPaid),
+      currentBankBalance: totals.totalDeposits - totalSettled - (totals.totalWithdrawals - totals.totalMemberPaid),
       totalDeposits: totals.totalDeposits,
       totalWithdrawals: totals.totalWithdrawals,
       totalMemberPaid: totals.totalMemberPaid,

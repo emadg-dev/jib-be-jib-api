@@ -34,4 +34,13 @@ export class SettlementRepository {
     const result = await this.db.prepare('SELECT SUM(amount) AS total FROM Settlements WHERE trip_id = ?').bind(tripId).first();
     return (result?.total as number) || 0;
   }
+
+  async getSettledByMember(tripId: string) {
+    return (await this.db.prepare(`
+      SELECT member_id, SUM(amount) AS total_settled
+      FROM Settlements
+      WHERE trip_id = ?
+      GROUP BY member_id
+    `).bind(tripId).all()).results;
+  }
 }

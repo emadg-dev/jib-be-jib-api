@@ -63,7 +63,8 @@ router.post('/telegram/members', requireOwner, async (c) => {
   const memberLines = data.members.map((m: any, i: number) => {
     const status = m.balance >= 0 ? '✅' : '⚠️';
     const bal = `${m.balance < 0 ? '-' : '+'}${fmt(m.balance)}`;
-    return `${status} ${i + 1}. ${m.display_name || m.name}\n   💰 Deposited: ${fmt(m.total_deposited)}\n   🛒 Spent: ${fmt(m.total_expenses)}\n   📊 Balance: ${bal}`;
+    const settledLine = m.total_settled > 0 ? `\n   ✅ Settled: ${fmt(m.total_settled)}` : '';
+    return `${status} ${i + 1}. ${m.display_name || m.name}\n   💰 Deposited: ${fmt(m.total_deposited)}\n   🛒 Spent: ${fmt(m.total_expenses)}${settledLine}\n   📊 Balance: ${bal}`;
   });
 
   const settings = await settingsService(c).getTelegramSettings(tripId(c));
