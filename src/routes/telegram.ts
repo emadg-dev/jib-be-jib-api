@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { Env } from '../types/env';
 import { SettingsRepository } from '../repositories/SettingsRepository';
 import { DashboardRepository } from '../repositories/DashboardRepository';
+import { SettlementRepository } from '../repositories/SettlementRepository';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { WithdrawalRepository } from '../repositories/WithdrawalRepository';
 import { TripRepository } from '../repositories/TripRepository';
@@ -37,7 +38,7 @@ router.get('/:chatId/balance', async (c) => {
   const { trip_id } = c.get('telegramContext');
   const tripRepo = new TripRepository(c.env.DB);
   const dashboardRepo = new DashboardRepository(c.env.DB);
-  const dashboardService = new DashboardService(dashboardRepo);
+  const dashboardService = new DashboardService(dashboardRepo, new SettlementRepository(c.env.DB));
   const [data, trip] = await Promise.all([
     dashboardService.getDashboardData(trip_id),
     tripRepo.findById(trip_id),
@@ -100,7 +101,7 @@ router.get('/:chatId/summary', async (c) => {
   const { trip_id } = c.get('telegramContext');
   const tripRepo = new TripRepository(c.env.DB);
   const dashboardRepo = new DashboardRepository(c.env.DB);
-  const dashboardService = new DashboardService(dashboardRepo);
+  const dashboardService = new DashboardService(dashboardRepo, new SettlementRepository(c.env.DB));
   const [data, trip] = await Promise.all([
     dashboardService.getDashboardData(trip_id),
     tripRepo.findById(trip_id),

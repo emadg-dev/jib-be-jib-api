@@ -663,6 +663,113 @@ const openApiSpec = {
         }
       }
     },
+    '/settlements': {
+      get: {
+        tags: ['Settlements'],
+        summary: 'List all settlements (Owner only)',
+        description: 'Returns all settlements recorded for the current trip. Only accessible by trip owner.',
+        responses: {
+          '200': {
+            description: 'Array of settlements',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          trip_id: { type: 'string' },
+                          member_id: { type: 'string' },
+                          member_name: { type: 'string' },
+                          amount: { type: 'number' },
+                          note: { type: 'string', nullable: true },
+                          date: { type: 'string', nullable: true },
+                          created_at: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '403': { description: 'Requires owner role' }
+        }
+      },
+      post: {
+        tags: ['Settlements'],
+        summary: 'Record a new settlement (Owner only)',
+        description: 'Record that the owner has paid off a member\'s debt to the bank.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['member_id', 'amount'],
+                properties: {
+                  member_id: { type: 'string', description: 'ID of the member whose debt is being settled' },
+                  amount: { type: 'number', description: 'Amount settled', example: 50 },
+                  note: { type: 'string', description: 'Optional note' },
+                  date: { type: 'string', description: 'ISO date (YYYY-MM-DD). Defaults to today if omitted' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': { description: 'Settlement recorded' },
+          '400': { description: 'Member must be active in this trip' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
+    '/settlements/{id}': {
+      put: {
+        tags: ['Settlements'],
+        summary: 'Update a settlement (Owner only)',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Settlement ID' }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['member_id', 'amount'],
+                properties: {
+                  member_id: { type: 'string' },
+                  amount: { type: 'number' },
+                  note: { type: 'string' },
+                  date: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Settlement updated' },
+          '403': { description: 'Requires owner role' }
+        }
+      },
+      delete: {
+        tags: ['Settlements'],
+        summary: 'Delete a settlement (Owner only)',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Settlement ID' }
+        ],
+        responses: {
+          '200': { description: 'Settlement deleted' },
+          '403': { description: 'Requires owner role' }
+        }
+      }
+    },
     '/telegram/{chatId}/balance': {
       get: {
         tags: ['Telegram Bot'],

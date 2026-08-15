@@ -2,6 +2,7 @@ import { TripRepository } from '../repositories/TripRepository';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { DepositRepository } from '../repositories/DepositRepository';
 import { WithdrawalRepository } from '../repositories/WithdrawalRepository';
+import { SettlementRepository } from '../repositories/SettlementRepository';
 import { DashboardRepository } from '../repositories/DashboardRepository';
 import { hashPassword } from '../utils/password';
 import { calculateSettlements } from '../utils/settlement';
@@ -86,16 +87,34 @@ export class WithdrawalService {
   async deleteWithdrawal(id: string, tripId: string) { await this.repo.delete(id, tripId); }
 }
 
+export class SettlementService {
+  constructor(private repo: SettlementRepository) {}
+  async getSettlements(tripId: string) { return this.repo.findAll(tripId); }
+  async createSettlement(tripId: string, data: any) {
+    const id = `set_${crypto.randomUUID()}`;
+    const result = await this.repo.create(id, tripId, data.member_id, data.amount, data.note, data.date);
+    if (!result.meta.changes) throw new HTTPException(400, { message: 'Member must be active in this trip' });
+    return { id, ...data };
+  }
+  async updateSettlement(id: string, tripId: string, data: any) {
+    await this.repo.update(id, tripId, data.member_id, data.amount, data.note, data.date);
+    return { id, ...data };
+  }
+  async deleteSettlement(id: string, tripId: string) { await this.repo.delete(id, tripId); }
+}
+
 export class DashboardService {
-  constructor(private repo: DashboardRepository) {}
+  constructor(private repo: DashboardRepository, private settlementRepo: SettlementRepository) {}
   async getDashboardData(tripId: string) {
     const totals = await this.repo.getTotals(tripId);
     const members = await this.repo.getMemberStats(tripId);
+    const totalSettled = await this.settlementRepo.getTotalSettled(tripId);
     return {
-      currentBankBalance: totals.totalDeposits - (totals.totalWithdrawals - totals.totalMemberPaid),
+      currentBankBalance: totals.totalDeposits + totalSettled - (totals.totalWithdrawals - totals.totalMemberPaid),
       totalDeposits: totals.totalDeposits,
       totalWithdrawals: totals.totalWithdrawals,
       totalMemberPaid: totals.totalMemberPaid,
+      totalSettled,
       members,
       categories: await this.repo.getExpensesByCategory(tripId),
       settlements: calculateSettlements(members as any)

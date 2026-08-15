@@ -99,3 +99,10 @@ export const ratingSchema = z.object({
   participation: z.number().int().min(1).max(5),
   flexibility: z.number().int().min(1).max(5),
 });
+
+export const settlementSchema = z.object({
+  member_id: z.string().min(1, 'Member is required'),
+  amount: z.number().positive('Amount must be positive'),
+  note: z.string().optional(),
+  date: z.string().optional()
+});
