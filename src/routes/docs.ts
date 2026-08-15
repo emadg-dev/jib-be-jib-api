@@ -24,6 +24,11 @@ const openApiSpec = {
         in: 'cookie',
         name: 'auth_token',
       },
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        description: 'API_SECRET for Telegram bot endpoints',
+      },
     },
   },
   security: [
@@ -476,6 +481,375 @@ const openApiSpec = {
           '403': { description: 'Requires owner role' },
           '401': { description: 'Unauthenticated' },
           '409': { description: 'No trip selected' }
+        }
+      }
+    },
+    '/ratings/ratees': {
+      get: {
+        tags: ['Ratings'],
+        summary: 'List members to rate with existing scores',
+        description: 'Returns all trip members (excluding the caller) with their current rating scores if already rated.',
+        responses: {
+          '200': {
+            description: 'Array of ratees with optional scores',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          display_name: { type: 'string' },
+                          avatar: { type: 'string', nullable: true },
+                          ethics: { type: 'integer', nullable: true, minimum: 1, maximum: 5 },
+                          participation: { type: 'integer', nullable: true, minimum: 1, maximum: 5 },
+                          flexibility: { type: 'integer', nullable: true, minimum: 1, maximum: 5 },
+                          rated: { type: 'boolean' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/ratings': {
+      post: {
+        tags: ['Ratings'],
+        summary: 'Submit or update a rating for a member',
+        description: 'Submit a rating. Owner/admin can overwrite existing ratings; regular members cannot.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['ratee_id', 'ethics', 'participation', 'flexibility'],
+                properties: {
+                  ratee_id: { type: 'string', description: 'ID of the member being rated' },
+                  ethics: { type: 'integer', minimum: 1, maximum: 5, example: 4 },
+                  participation: { type: 'integer', minimum: 1, maximum: 5, example: 5 },
+                  flexibility: { type: 'integer', minimum: 1, maximum: 5, example: 3 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': { description: 'Rating submitted' },
+          '400': { description: 'Cannot rate yourself' },
+          '409': { description: 'Rating already submitted and is final (non-owner)' }
+        }
+      }
+    },
+    '/ratings/results': {
+      get: {
+        tags: ['Ratings'],
+        summary: 'Get aggregated rating results per member',
+        description: 'Returns average scores across all raters for each ratee.',
+        responses: {
+          '200': {
+            description: 'Array of aggregated ratings',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          ratee_id: { type: 'string' },
+                          display_name: { type: 'string' },
+                          avatar: { type: 'string', nullable: true },
+                          ethics_avg: { type: 'number' },
+                          participation_avg: { type: 'number' },
+                          flexibility_avg: { type: 'number' },
+                          overall_avg: { type: 'number' },
+                          rated_by_count: { type: 'integer' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/ratings/status': {
+      get: {
+        tags: ['Ratings'],
+        summary: 'Get rating submission status for all members',
+        description: 'Returns whether each active member has submitted ratings for all other members.',
+        responses: {
+          '200': {
+            description: 'Array of member submission statuses',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          display_name: { type: 'string' },
+                          avatar: { type: 'string', nullable: true },
+                          submitted: { type: 'boolean' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/ratings/all': {
+      get: {
+        tags: ['Ratings'],
+        summary: 'Get all individual ratings (Owner/Admin only)',
+        description: 'Returns every rating given in the trip, grouped by rater. Only accessible by trip owner or admin.',
+        responses: {
+          '200': {
+            description: 'Array of all individual ratings',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          rater_id: { type: 'string' },
+                          rater_name: { type: 'string' },
+                          rater_avatar: { type: 'string', nullable: true },
+                          ratee_id: { type: 'string' },
+                          ratee_name: { type: 'string' },
+                          ratee_avatar: { type: 'string', nullable: true },
+                          ethics: { type: 'integer' },
+                          participation: { type: 'integer' },
+                          flexibility: { type: 'integer' },
+                          created_at: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '403': { description: 'Requires owner or admin role' }
+        }
+      }
+    },
+    '/telegram/{chatId}/balance': {
+      get: {
+        tags: ['Telegram Bot'],
+        summary: 'Get trip balance by Telegram chat ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'chatId', in: 'path', required: true, schema: { type: 'string' }, description: 'Telegram chat ID linked to a trip' }
+        ],
+        responses: {
+          '200': {
+            description: 'Trip balance data',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        trip_id: { type: 'string' },
+                        trip_name: { type: 'string' },
+                        currency: { type: 'string' },
+                        bank_balance: { type: 'number' },
+                        total_deposits: { type: 'number' },
+                        total_expenses: { type: 'number' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { description: 'Unauthorized — invalid or missing API_SECRET' },
+          '404': { description: 'Chat not linked or notifications disabled' }
+        }
+      }
+    },
+    '/telegram/{chatId}/expenses': {
+      get: {
+        tags: ['Telegram Bot'],
+        summary: 'Get trip expenses by Telegram chat ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'chatId', in: 'path', required: true, schema: { type: 'string' }, description: 'Telegram chat ID linked to a trip' }
+        ],
+        responses: {
+          '200': {
+            description: 'Trip expenses with beneficiary details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        trip_id: { type: 'string' },
+                        trip_name: { type: 'string' },
+                        currency: { type: 'string' },
+                        expenses: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              description: { type: 'string' },
+                              category: { type: 'string' },
+                              amount: { type: 'number' },
+                              date: { type: 'string' },
+                              beneficiaries: {
+                                type: 'array',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    name: { type: 'string' },
+                                    share: { type: 'number' }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Chat not linked or notifications disabled' }
+        }
+      }
+    },
+    '/telegram/{chatId}/members': {
+      get: {
+        tags: ['Telegram Bot'],
+        summary: 'Get trip members by Telegram chat ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'chatId', in: 'path', required: true, schema: { type: 'string' }, description: 'Telegram chat ID linked to a trip' }
+        ],
+        responses: {
+          '200': {
+            description: 'Trip members list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        trip_id: { type: 'string' },
+                        members: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string' },
+                              name: { type: 'string' },
+                              role: { type: 'string' },
+                              active: { type: 'boolean' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Chat not linked or notifications disabled' }
+        }
+      }
+    },
+    '/telegram/{chatId}/summary': {
+      get: {
+        tags: ['Telegram Bot'],
+        summary: 'Get trip summary by Telegram chat ID',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'chatId', in: 'path', required: true, schema: { type: 'string' }, description: 'Telegram chat ID linked to a trip' }
+        ],
+        responses: {
+          '200': {
+            description: 'Full trip summary',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        trip_id: { type: 'string' },
+                        trip_name: { type: 'string' },
+                        currency: { type: 'string' },
+                        bank_balance: { type: 'number' },
+                        total_deposits: { type: 'number' },
+                        total_expenses: { type: 'number' },
+                        member_count: { type: 'integer' },
+                        categories: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              category: { type: 'string' },
+                              total: { type: 'number' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { description: 'Unauthorized' },
+          '404': { description: 'Chat not linked or notifications disabled' }
         }
       }
     }

@@ -91,3 +91,10 @@ export const withdrawalSchema = z.object({
   const totalShares = data.beneficiaries.reduce((sum, b) => sum + b.share, 0);
   return Math.abs(totalShares - data.amount) < 0.01;
 }, { message: 'Sum of shares must equal total amount', path: ['beneficiaries'] });
+
+export const ratingSchema = z.object({
+  ratee_id: z.string().min(1, 'Member is required'),
+  ethics: z.number().int().min(1).max(5),
+  participation: z.number().int().min(1).max(5),
+  flexibility: z.number().int().min(1).max(5),
+});

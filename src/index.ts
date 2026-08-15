@@ -13,6 +13,7 @@ import profileRoutes from './routes/profile';
 import notificationRoutes from './routes/notifications';
 import docsRoutes from './routes/docs';
 import telegramRoutes from './routes/telegram';
+import ratingsRoutes from './routes/ratings';
 
 
 const app = new Hono<Env>().basePath('/api');
@@ -58,6 +59,7 @@ app.route('/dashboard', dashboardRoutes);
 app.route('/profile', profileRoutes);
 app.route('/notifications', notificationRoutes);
 app.route('/telegram', telegramRoutes);
+app.route('/ratings', ratingsRoutes);
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
