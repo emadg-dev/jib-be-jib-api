@@ -35,11 +35,13 @@ src/
 ├── types/env.ts          # Env, AuthenticatedUser interfaces
 ├── middleware/
 │   ├── auth.ts           # authMiddleware, requireActiveTrip, requireOwner
+│   ├── permission.ts     # requirePermission (fine-grained RBAC)
 │   └── errorHandler.ts   # Global error handler
-├── routes/               # One file per feature (auth, trip, members, deposits, withdrawals, dashboard, profile, docs)
-├── services/             # AuthService, TripService, MemberService, DepositService, WithdrawalService, DashboardService
+├── config/
+│   └── permissions.ts    # Permission registry, role defaults, validation
+├── routes/               # One file per feature
+├── services/             # Business logic layer
 ├── repositories/         # D1 query layer (one per entity)
-├── validators/index.ts   # All Zod schemas
 ├── utils/
 │   ├── response.ts       # successResponse / errorResponse helpers
 │   ├── password.ts       # PBKDF2 via WebCrypto (not bcrypt)
@@ -47,7 +49,7 @@ src/
 └── db/
     ├── schema.sql        # Full DDL
     ├── seed.sql          # Seed data
-    └── migrations/       # 3 migrations (initial, member_trips, date_columns)
+    └── migrations/       # 12 migrations (initial through roles)
 ```
 
 ## Database Tables
@@ -56,39 +58,78 @@ src/
 |-------|---------|
 | `Trips` | Trip definitions (name, currency) |
 | `Members` | User accounts (name, password_hash, role, display_name) |
-| `MemberTrips` | Many-to-many membership (authoritative) |
+| `MemberTrips` | Many-to-many membership with per-trip role + custom_role_id |
 | `Deposits` | Money deposits per member |
 | `Withdrawals` | Expenses (amount, category, description) |
 | `WithdrawalMembers` | Per-member share of each withdrawal |
+| `TripSettings` | Telegram notification config per trip |
+| `TripRatings` | Member ratings (ethics, participation, flexibility) |
+| `TripMemberPermissions` | Per-member permission overrides (allow/deny) |
+| `TripRoles` | Custom roles per trip |
+| `TripRolePermissions` | Permissions assigned to each custom role |
+
+## Permissions System
+
+Fine-grained RBAC with 29 permissions across 9 groups:
+
+- **admin**: Bypasses all permission checks
+- **owner** (per-trip): Bypasses all permission checks within trip
+- **member** (per-trip): Base permissions from `ROLE_DEFAULTS` or assigned custom role
+- **Overrides**: Explicit `allow`/`deny` per member override role defaults (deny wins)
+
+Permission resolution chain:
+```
+admin → all permissions
+owner → all permissions (with trip membership check)
+member → custom role permissions → member defaults → explicit deny/allow overrides
+```
+
+### Permission Groups
+
+| Group | Permissions |
+|-------|-------------|
+| trip | create, update, delete |
+| member | create, update, delete, view |
+| deposit | create, update, delete, view |
+| withdrawal | create, update, delete, view |
+| settlement | create, update, delete, view |
+| ratings | view, submit, update, delete |
+| notifications | manage, send |
+| settings | manage |
+| permissions | manage |
+| roles | manage |
 
 ## Auth Flow
 
 1. Login with name + password → JWT in HttpOnly cookie
 2. JWT contains: `id, name, display_name, role, trip_id, exp` (7 days)
 3. Multi-trip: login returns `requires_trip_selection: true` if user has >1 trip → client calls `/trip/select`
-4. Middleware chain: `authMiddleware` → `requireActiveTrip` → `requireOwner`
-
-Roles: `owner` (full CRUD) | `member` (read + create withdrawals)
+4. Middleware chain: `authMiddleware` → `requireActiveTrip` → `requirePermission`
 
 ## API Routes
 
 All prefixed `/api`. See `src/routes/docs.ts` for full OpenAPI spec.
 
-| Group | Endpoints | Owner-only |
-|-------|-----------|-----------|
-| auth | POST /login, /logout, GET /me, POST /setup | No |
-| trip | GET /available, POST /select, GET/POST/PUT/DELETE | POST/PUT/DELETE |
-| members | GET, GET /:id, POST, POST /add, PUT /:id, DELETE /:id | POST/PUT/DELETE |
-| deposits | GET, POST, PUT /:id, DELETE /:id | All writes |
-| withdrawals | GET, POST, PUT /:id, DELETE /:id | POST (any member), PUT/DELETE (owner) |
-| dashboard | GET | No |
-| profile | GET, PUT /password | No |
+| Group | Endpoints | Required Permission |
+|-------|-----------|-------------------|
+| auth | POST /login, /logout, GET /me, POST /setup | None |
+| trip | GET /available, POST /select, GET/POST/PUT/DELETE | trip.create/update/delete |
+| members | GET, GET /:id, POST, POST /add, PUT /:id, DELETE /:id | member.create/update/delete |
+| deposits | GET, POST, PUT /:id, DELETE /:id | deposit.create/update/delete |
+| withdrawals | GET, POST, PUT /:id, DELETE /:id | withdrawal.create/update/delete |
+| dashboard | GET | dashboard.view |
+| ratings | GET /ratees, POST, GET /results, GET /status, GET /all, GET /mine, PUT /:id, DELETE /:id | ratings.submit/update/delete |
+| settlements | GET, POST, PUT /:id, DELETE /:id | settlement.create/update/delete |
+| notifications | GET /settings, PUT /settings, POST /test, POST /send, POST /members, POST /bank-stats, POST /settlements, POST /ratings | notifications.manage/send |
+| permissions | GET /, GET /registry, GET /:memberId, PUT /:memberId, POST /:memberId/:permission, DELETE /:memberId/:permission, PUT /:memberId/role | permissions.manage |
+| roles | GET /, GET /permissions, GET /:roleId, POST /, PUT /:roleId, DELETE /:roleId | roles.manage |
 
 ## Key Patterns
 
 - **Trip-scoped multi-tenancy**: all financial data scoped to `trip_id` in JWT
 - **Constructor-based DI**: services receive repos; repos receive D1 handle
 - **Zod validation**: schemas in `src/validators/index.ts`, used via `zValidator` middleware
+- **Permission middleware**: `requirePermission('permission.key')` checks RBAC chain
 - **Settlement algorithm**: greedy debtor/creditor matching in `src/utils/settlement.ts`
 - **Password hashing**: PBKDF2 via WebCrypto (100k iterations, SHA-256) — not bcrypt
 - **Response format**: `{ success: true, data }` or `{ success: false, error: "message" }`
