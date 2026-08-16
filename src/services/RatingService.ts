@@ -69,4 +69,42 @@ export class RatingService {
   async getAllRatings(tripId: string) {
     return this.ratingRepo.getAllRatings(tripId);
   }
+
+  async getMyRatings(raterId: string, tripId: string) {
+    return this.ratingRepo.getMyRatings(raterId, tripId);
+  }
+
+  async updateRating(ratingId: string, raterId: string, tripId: string, rateeId: string, ethics: number, participation: number, flexibility: number, isOwnerOrAdmin: boolean) {
+    const existing = await this.ratingRepo.findById(ratingId, tripId);
+    if (!existing) {
+      throw new HTTPException(404, { message: 'Rating not found' });
+    }
+
+    if (existing.rater_id !== raterId && !isOwnerOrAdmin) {
+      throw new HTTPException(403, { message: 'Cannot edit ratings by other members' });
+    }
+
+    if (!isOwnerOrAdmin && existing.rater_id === raterId) {
+      if (ethics < existing.ethics || participation < existing.participation || flexibility < existing.flexibility) {
+        throw new HTTPException(400, { message: 'New ratings must be equal to or higher than previous ratings' });
+      }
+    }
+
+    await this.ratingRepo.upsert(raterId, rateeId, tripId, ethics, participation, flexibility);
+    return { success: true };
+  }
+
+  async deleteRating(ratingId: string, raterId: string, tripId: string, isOwnerOrAdmin: boolean) {
+    const existing = await this.ratingRepo.findById(ratingId, tripId);
+    if (!existing) {
+      throw new HTTPException(404, { message: 'Rating not found' });
+    }
+
+    if (existing.rater_id !== raterId && !isOwnerOrAdmin) {
+      throw new HTTPException(403, { message: 'Cannot delete ratings by other members' });
+    }
+
+    await this.ratingRepo.deleteRating(ratingId, tripId);
+    return { success: true };
+  }
 }

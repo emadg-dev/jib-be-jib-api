@@ -109,6 +109,7 @@ export class RatingRepository {
   async getAllRatings(tripId: string) {
     return (await this.db.prepare(`
       SELECT
+        r.id,
         r.rater_id,
         rater.display_name AS rater_name,
         rater.avatar AS rater_avatar,
@@ -125,5 +126,39 @@ export class RatingRepository {
       WHERE r.trip_id = ?
       ORDER BY rater.display_name COLLATE NOCASE ASC, ratee.display_name COLLATE NOCASE ASC
     `).bind(tripId).all()).results;
+  }
+
+  async getMyRatings(raterId: string, tripId: string) {
+    return (await this.db.prepare(`
+      SELECT
+        r.id,
+        r.rater_id,
+        rater.display_name AS rater_name,
+        rater.avatar AS rater_avatar,
+        r.ratee_id,
+        ratee.display_name AS ratee_name,
+        ratee.avatar AS ratee_avatar,
+        r.ethics,
+        r.participation,
+        r.flexibility,
+        r.created_at
+      FROM Ratings r
+      JOIN Members rater ON rater.id = r.rater_id
+      JOIN Members ratee ON ratee.id = r.ratee_id
+      WHERE r.trip_id = ? AND r.rater_id = ?
+      ORDER BY ratee.display_name COLLATE NOCASE ASC
+    `).bind(tripId, raterId).all()).results;
+  }
+
+  async findById(ratingId: string, tripId: string) {
+    return this.db.prepare(
+      'SELECT id, rater_id, ratee_id, ethics, participation, flexibility FROM Ratings WHERE id = ? AND trip_id = ?'
+    ).bind(ratingId, tripId).first<RatingRow>();
+  }
+
+  async deleteRating(ratingId: string, tripId: string) {
+    return this.db.prepare(
+      'DELETE FROM Ratings WHERE id = ? AND trip_id = ?'
+    ).bind(ratingId, tripId).run();
   }
 }

@@ -45,6 +45,23 @@ router.get('/all', requireOwner, async (c) => {
   return c.json(successResponse(await getService(c).getAllRatings(tripId(c))));
 });
 
+router.get('/mine', async (c) => {
+  return c.json(successResponse(await getService(c).getMyRatings(userId(c), tripId(c))));
+});
+
+router.put('/:ratingId', zValidator('json', ratingSchema), async (c) => {
+  const ratingId = c.req.param('ratingId') as string;
+  const data = c.req.valid('json');
+  await getService(c).updateRating(ratingId, userId(c), tripId(c), data.ratee_id, data.ethics, data.participation, data.flexibility, isOwnerOrAdmin(c));
+  return c.json(successResponse(null, 'Rating updated'));
+});
+
+router.delete('/:ratingId', requireOwner, async (c) => {
+  const ratingId = c.req.param('ratingId') as string;
+  await getService(c).deleteRating(ratingId, userId(c), tripId(c), isOwnerOrAdmin(c));
+  return c.json(successResponse(null, 'Rating deleted'));
+});
+
 router.delete('/member/:memberId', requireOwner, async (c) => {
   const memberId = c.req.param('memberId') as string;
   await getService(c).deleteByRater(memberId, tripId(c));
