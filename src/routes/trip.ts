@@ -7,7 +7,8 @@ import { TripService } from '../services/TripService';
 import { AuthService } from '../services/AuthService';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { successResponse } from '../utils/response';
-import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
+import { requirePermission } from '../middleware/permission';
 import { setCookie } from 'hono/cookie';
 import { notificationServiceFromEnv } from '../services/NotificationService';
 
@@ -24,7 +25,7 @@ router.post('/select', zValidator('json', selectTripSchema), async (c) => {
   return c.json(successResponse(result, 'Trip selected'));
 });
 
-router.post('/', zValidator('json', tripSchema), async (c) => {
+router.post('/', requirePermission('trip.create'), zValidator('json', tripSchema), async (c) => {
   const data = c.req.valid('json');
   const trip = await tripService(c).createTrip(c.get('user').id, data);
   c.executionCtx.waitUntil(
@@ -43,7 +44,7 @@ router.get('/', requireActiveTrip, async (c) => {
   return c.json(successResponse(await tripService(c).getTrip(c.get('user').trip_id!)));
 });
 
-router.put('/:id', requireOwner, zValidator('json', tripSchema), async (c) => {
+router.put('/:id', requirePermission('trip.update'), zValidator('json', tripSchema), async (c) => {
   const data = c.req.valid('json');
   const tripId = c.req.param('id');
   const user = c.get('user');
@@ -68,7 +69,7 @@ router.put('/:id', requireOwner, zValidator('json', tripSchema), async (c) => {
   return c.json(successResponse(updated));
 });
 
-router.delete('/delete/:id', requireOwner, async (c) => {
+router.delete('/delete/:id', requirePermission('trip.delete'), async (c) => {
   await tripService(c).deleteTrip(c.req.param('id')!);
   return c.json(successResponse(null, 'Trip deleted'));
 });

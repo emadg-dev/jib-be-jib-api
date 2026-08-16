@@ -6,7 +6,8 @@ import { RatingRepository } from '../repositories/RatingRepository';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { RatingService } from '../services/RatingService';
 import { successResponse } from '../utils/response';
-import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
+import { requirePermission } from '../middleware/permission';
 
 const router = new Hono<Env>();
 router.use('*', authMiddleware, requireActiveTrip);
@@ -26,7 +27,7 @@ router.get('/ratees', async (c) => {
   return c.json(successResponse(await getService(c).getRatees(userId(c), tripId(c))));
 });
 
-router.post('/', zValidator('json', ratingSchema), async (c) => {
+router.post('/', requirePermission('ratings.submit'), zValidator('json', ratingSchema), async (c) => {
   const data = c.req.valid('json');
   await getService(c).submitRating(userId(c), tripId(c), data.ratee_id, data.ethics, data.participation, data.flexibility, isOwnerOrAdmin(c));
 
@@ -49,20 +50,20 @@ router.get('/mine', async (c) => {
   return c.json(successResponse(await getService(c).getMyRatings(userId(c), tripId(c))));
 });
 
-router.put('/:ratingId', zValidator('json', ratingSchema), async (c) => {
+router.put('/:ratingId', requirePermission('ratings.update'), zValidator('json', ratingSchema), async (c) => {
   const ratingId = c.req.param('ratingId') as string;
   const data = c.req.valid('json');
   await getService(c).updateRating(ratingId, userId(c), tripId(c), data.ratee_id, data.ethics, data.participation, data.flexibility, isOwnerOrAdmin(c));
   return c.json(successResponse(null, 'Rating updated'));
 });
 
-router.delete('/:ratingId', requireOwner, async (c) => {
+router.delete('/:ratingId', requirePermission('ratings.delete'), async (c) => {
   const ratingId = c.req.param('ratingId') as string;
   await getService(c).deleteRating(ratingId, userId(c), tripId(c), isOwnerOrAdmin(c));
   return c.json(successResponse(null, 'Rating deleted'));
 });
 
-router.delete('/member/:memberId', requireOwner, async (c) => {
+router.delete('/member/:memberId', requirePermission('ratings.delete'), async (c) => {
   const memberId = c.req.param('memberId') as string;
   await getService(c).deleteByRater(memberId, tripId(c));
   return c.json(successResponse(null, 'All ratings by this member deleted'));

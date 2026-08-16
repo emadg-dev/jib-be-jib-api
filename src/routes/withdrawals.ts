@@ -5,7 +5,8 @@ import { withdrawalSchema } from '../validators';
 import { WithdrawalRepository } from '../repositories/WithdrawalRepository';
 import { WithdrawalService } from '../services/TripService';
 import { successResponse } from '../utils/response';
-import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
+import { requirePermission } from '../middleware/permission';
 import { notificationServiceFromEnv } from '../services/NotificationService';
 
 const router = new Hono<Env>();
@@ -13,7 +14,7 @@ router.use('*', authMiddleware, requireActiveTrip);
 const service = (c: any) => new WithdrawalService(new WithdrawalRepository(c.env.DB));
 const tripId = (c: any) => c.get('user').trip_id!;
 router.get('/', async (c) => c.json(successResponse(await service(c).getWithdrawals(tripId(c)))));
-router.post('/', zValidator('json', withdrawalSchema), async (c) => {
+router.post('/', requirePermission('withdrawal.create'), zValidator('json', withdrawalSchema), async (c) => {
   const data = c.req.valid('json');
   const withdrawal = await service(c).createWithdrawal(tripId(c), data);
   c.executionCtx.waitUntil(
@@ -32,6 +33,6 @@ router.post('/', zValidator('json', withdrawalSchema), async (c) => {
   );
   return c.json(successResponse(withdrawal), 201);
 });
-router.put('/:id', requireOwner, zValidator('json', withdrawalSchema), async (c) => c.json(successResponse(await service(c).updateWithdrawal(c.req.param('id'), tripId(c), c.req.valid('json')))));
-router.delete('/:id', requireOwner, async (c) => { await service(c).deleteWithdrawal(String(c.req.param('id')), tripId(c)); return c.json(successResponse(null, 'Deleted')); });
+router.put('/:id', requirePermission('withdrawal.update'), zValidator('json', withdrawalSchema), async (c) => c.json(successResponse(await service(c).updateWithdrawal(c.req.param('id'), tripId(c), c.req.valid('json')))));
+router.delete('/:id', requirePermission('withdrawal.delete'), async (c) => { await service(c).deleteWithdrawal(String(c.req.param('id')), tripId(c)); return c.json(successResponse(null, 'Deleted')); });
 export default router;

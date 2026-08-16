@@ -5,7 +5,8 @@ import { addMemberToTripSchema, memberSchema } from '../validators';
 import { MemberRepository } from '../repositories/MemberRepository';
 import { MemberService } from '../services/TripService';
 import { successResponse } from '../utils/response';
-import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
+import { requirePermission } from '../middleware/permission';
 import { notificationServiceFromEnv } from '../services/NotificationService';
 
 const router = new Hono<Env>();
@@ -14,7 +15,7 @@ const getService = (c: any) => new MemberService(new MemberRepository(c.env.DB))
 const tripId = (c: any) => c.get('user').trip_id!;
 
 router.get('/', async (c) => c.json(successResponse(await getService(c).getMembers(tripId(c)))));
-router.post('/add', requireOwner, zValidator('json', addMemberToTripSchema), async (c) => {
+router.post('/add', requirePermission('member.create'), zValidator('json', addMemberToTripSchema), async (c) => {
   const member = await getService(c).addMemberToTrip(tripId(c), c.req.valid('json'));
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
@@ -28,7 +29,7 @@ router.post('/add', requireOwner, zValidator('json', addMemberToTripSchema), asy
   return c.json(successResponse(member), 201);
 });
 router.get('/:id', async (c) => c.json(successResponse(await getService(c).getMember(c.req.param('id'), tripId(c)))));
-router.post('/', requireOwner, zValidator('json', memberSchema), async (c) => {
+router.post('/', requirePermission('member.create'), zValidator('json', memberSchema), async (c) => {
   const member = await getService(c).createMember(tripId(c), c.req.valid('json'));
   c.executionCtx.waitUntil(
     notificationServiceFromEnv(c.env).send({
@@ -41,10 +42,10 @@ router.post('/', requireOwner, zValidator('json', memberSchema), async (c) => {
   );
   return c.json(successResponse(member), 201);
 });
-router.put('/:id', requireOwner, zValidator('json', memberSchema), async (c) => {
+router.put('/:id', requirePermission('member.update'), zValidator('json', memberSchema), async (c) => {
   return c.json(successResponse(await getService(c).updateMember(c.req.param('id'), tripId(c), c.req.valid('json'))));
 });
-router.delete('/:id', requireOwner, async (c) => {
+router.delete('/:id', requirePermission('member.delete'), async (c) => {
   await getService(c).deleteMember(String(c.req.param('id')), tripId(c));
   return c.json(successResponse(null, 'Removed from trip'));
 });

@@ -15,6 +15,8 @@ import docsRoutes from './routes/docs';
 import telegramRoutes from './routes/telegram';
 import ratingsRoutes from './routes/ratings';
 import settlementRoutes from './routes/settlements';
+import permissionRoutes from './routes/permissions';
+import roleRoutes from './routes/roles';
 
 
 const app = new Hono<Env>().basePath('/api');
@@ -62,6 +64,8 @@ app.route('/notifications', notificationRoutes);
 app.route('/telegram', telegramRoutes);
 app.route('/ratings', ratingsRoutes);
 app.route('/settlements', settlementRoutes);
+app.route('/permissions', permissionRoutes);
+app.route('/roles', roleRoutes);
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));

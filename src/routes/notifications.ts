@@ -11,7 +11,8 @@ import { RatingRepository } from '../repositories/RatingRepository';
 import { DashboardService } from '../services/TripService';
 import { RatingService } from '../services/RatingService';
 import { successResponse } from '../utils/response';
-import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
+import { requirePermission } from '../middleware/permission';
 import { DEFAULT_NOTIFICATION_EVENTS } from '../dto/notification.dto';
 
 const router = new Hono<Env>();
@@ -24,7 +25,7 @@ const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2,
 
 router.get('/settings', async (c) => c.json(successResponse(await settingsService(c).getTelegramSettings(tripId(c)))));
 
-router.put('/settings', requireOwner, zValidator('json', telegramSettingsSchema), async (c) => {
+router.put('/settings', requirePermission('notifications.manage'), zValidator('json', telegramSettingsSchema), async (c) => {
   const settings = await settingsService(c).updateTelegramSettings(tripId(c), c.req.valid('json'));
   return c.json(successResponse(settings, 'Telegram settings updated'));
 });
@@ -47,13 +48,13 @@ router.post('/telegram/test', zValidator('json', telegramTestSchema), async (c) 
   return c.json(successResponse({ delivered }, delivered ? 'Test notification sent' : 'Test notification failed'));
 });
 
-router.post('/telegram/send', requireOwner, zValidator('json', telegramSendSchema), async (c) => {
+router.post('/telegram/send', requirePermission('notifications.send'), zValidator('json', telegramSendSchema), async (c) => {
   const { message } = c.req.valid('json');
   const delivered = await notificationServiceFromEnv(c.env).sendRaw(tripId(c), message);
   return c.json(successResponse({ delivered }, delivered ? 'Message sent' : 'Failed to send message'));
 });
 
-router.post('/telegram/members', requireOwner, async (c) => {
+router.post('/telegram/members', requirePermission('notifications.send'), async (c) => {
   const db = c.env.DB;
   const dashboardRepo = new DashboardRepository(db);
   const settlementRepo = new SettlementRepository(db);
@@ -78,7 +79,7 @@ router.post('/telegram/members', requireOwner, async (c) => {
   return c.json(successResponse({ delivered }, delivered ? 'Member breakdown sent' : 'Failed to send'));
 });
 
-router.post('/telegram/bank-stats', requireOwner, async (c) => {
+router.post('/telegram/bank-stats', requirePermission('notifications.send'), async (c) => {
   const db = c.env.DB;
   const dashboardRepo = new DashboardRepository(db);
   const settlementRepo = new SettlementRepository(db);
@@ -104,7 +105,7 @@ router.post('/telegram/bank-stats', requireOwner, async (c) => {
   return c.json(successResponse({ delivered }, delivered ? 'Bank stats sent' : 'Failed to send'));
 });
 
-router.post('/telegram/ratings', requireOwner, async (c) => {
+router.post('/telegram/ratings', requirePermission('notifications.send'), async (c) => {
   const db = c.env.DB;
   const ratingRepo = new RatingRepository(db);
   const ratingService = new RatingService(ratingRepo, new (await import('../repositories/MemberRepository')).MemberRepository(db));
@@ -130,7 +131,7 @@ router.post('/telegram/ratings', requireOwner, async (c) => {
   return c.json(successResponse({ delivered }, delivered ? 'Ratings sent' : 'Failed to send'));
 });
 
-router.post('/telegram/settlements', requireOwner, async (c) => {
+router.post('/telegram/settlements', requirePermission('notifications.send'), async (c) => {
   const db = c.env.DB;
   const settlementRepo = new SettlementRepository(db);
   const settlements = await settlementRepo.findAll(tripId(c));

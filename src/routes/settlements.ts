@@ -5,7 +5,8 @@ import { settlementSchema } from '../validators';
 import { SettlementRepository } from '../repositories/SettlementRepository';
 import { SettlementService } from '../services/TripService';
 import { successResponse } from '../utils/response';
-import { authMiddleware, requireActiveTrip, requireOwner } from '../middleware/auth';
+import { authMiddleware, requireActiveTrip } from '../middleware/auth';
+import { requirePermission } from '../middleware/permission';
 import { notificationServiceFromEnv } from '../services/NotificationService';
 
 const router = new Hono<Env>();
@@ -13,8 +14,8 @@ router.use('*', authMiddleware, requireActiveTrip);
 const service = (c: any) => new SettlementService(new SettlementRepository(c.env.DB));
 const tripId = (c: any) => c.get('user').trip_id!;
 
-router.get('/', requireOwner, async (c) => c.json(successResponse(await service(c).getSettlements(tripId(c)))));
-router.post('/', requireOwner, zValidator('json', settlementSchema), async (c) => {
+router.get('/', requirePermission('settlement.view'), async (c) => c.json(successResponse(await service(c).getSettlements(tripId(c)))));
+router.post('/', requirePermission('settlement.create'), zValidator('json', settlementSchema), async (c) => {
   const data = c.req.valid('json');
   const settlement = await service(c).createSettlement(tripId(c), data);
 
@@ -30,7 +31,7 @@ router.post('/', requireOwner, zValidator('json', settlementSchema), async (c) =
 
   return c.json(successResponse(settlement), 201);
 });
-router.put('/:id', requireOwner, zValidator('json', settlementSchema), async (c) => c.json(successResponse(await service(c).updateSettlement(c.req.param('id'), tripId(c), c.req.valid('json')))));
-router.delete('/:id', requireOwner, async (c) => { await service(c).deleteSettlement(String(c.req.param('id')), tripId(c)); return c.json(successResponse(null, 'Deleted')); });
+router.put('/:id', requirePermission('settlement.update'), zValidator('json', settlementSchema), async (c) => c.json(successResponse(await service(c).updateSettlement(c.req.param('id'), tripId(c), c.req.valid('json')))));
+router.delete('/:id', requirePermission('settlement.delete'), async (c) => { await service(c).deleteSettlement(String(c.req.param('id')), tripId(c)); return c.json(successResponse(null, 'Deleted')); });
 
 export default router;
