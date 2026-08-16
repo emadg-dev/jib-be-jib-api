@@ -41,7 +41,7 @@ router.get('/status', async (c) => {
   return c.json(successResponse(await getService(c).getRaterStatus(tripId(c))));
 });
 
-router.get('/all', requireOwner, async (c) => {
+router.get('/all', async (c) => {
   return c.json(successResponse(await getService(c).getAllRatings(tripId(c))));
 });
 
