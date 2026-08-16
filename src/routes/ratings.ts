@@ -45,4 +45,10 @@ router.get('/all', requireOwner, async (c) => {
   return c.json(successResponse(await getService(c).getAllRatings(tripId(c))));
 });
 
+router.delete('/member/:memberId', requireOwner, async (c) => {
+  const memberId = c.req.param('memberId') as string;
+  await getService(c).deleteByRater(memberId, tripId(c));
+  return c.json(successResponse(null, 'All ratings by this member deleted'));
+});
+
 export default router;

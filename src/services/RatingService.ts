@@ -44,8 +44,18 @@ export class RatingService {
       throw new HTTPException(409, { message: 'Rating already submitted and is final' });
     }
 
+    if (existing && !isOwnerOrAdmin) {
+      if (ethics < existing.ethics || participation < existing.participation || flexibility < existing.flexibility) {
+        throw new HTTPException(400, { message: 'New ratings must be equal to or higher than previous ratings' });
+      }
+    }
+
     await this.ratingRepo.upsert(raterId, rateeId, tripId, ethics, participation, flexibility);
     return { success: true };
+  }
+
+  async deleteByRater(raterId: string, tripId: string) {
+    return this.ratingRepo.deleteByRater(raterId, tripId);
   }
 
   async getAggregates(tripId: string) {

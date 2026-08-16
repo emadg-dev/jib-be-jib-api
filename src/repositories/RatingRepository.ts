@@ -25,8 +25,8 @@ export class RatingRepository {
 
   async findExisting(raterId: string, rateeId: string, tripId: string) {
     return this.db.prepare(
-      'SELECT id FROM Ratings WHERE rater_id = ? AND ratee_id = ? AND trip_id = ?'
-    ).bind(raterId, rateeId, tripId).first<{ id: string }>();
+      'SELECT id, ethics, participation, flexibility FROM Ratings WHERE rater_id = ? AND ratee_id = ? AND trip_id = ?'
+    ).bind(raterId, rateeId, tripId).first<{ id: string; ethics: number; participation: number; flexibility: number }>();
   }
 
   async getRatingsByRater(raterId: string, tripId: string) {
@@ -98,6 +98,12 @@ export class RatingRepository {
     return this.db.prepare(
       'DELETE FROM Ratings WHERE rater_id = ? AND ratee_id = ? AND trip_id = ?'
     ).bind(raterId, rateeId, tripId).run();
+  }
+
+  async deleteByRater(raterId: string, tripId: string) {
+    return this.db.prepare(
+      'DELETE FROM Ratings WHERE rater_id = ? AND trip_id = ?'
+    ).bind(raterId, tripId).run();
   }
 
   async getAllRatings(tripId: string) {
